@@ -304,7 +304,7 @@ elif app_mode == "🕹️Tetris":
         st.session_state.current_piece = get_random_piece()
         st.session_state.t_score = 0
         st.session_state.t_game_over = False
-        st.session_state.last_fall_time = time.time()
+        st.session_state.last_fall_time = 0.1
 
     def reset_tetris():
         st.session_state.tetris_board = [["⬛" for _ in range(T_COLS)] for _ in range(T_ROWS)]
