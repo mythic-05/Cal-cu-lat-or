@@ -271,7 +271,7 @@ elif app_mode == "👾 Space Invaders":
                 st.rerun()
 
 # -------------------------------------------------------------
-# PAGE 4: PLAYABLE TETRIS (NATIVE REFRESH ENGINE)
+# PAGE 4: PLAYABLE TETRIS (FIXED RESTART & LAYOUT FLUSH)
 # -------------------------------------------------------------
 elif app_mode == "🕹️Tetris":
     st.title("🕹️Tetris")
@@ -298,7 +298,7 @@ elif app_mode == "🕹️Tetris":
             "y": 0
         }
 
-    # Initialize Tetris session state tracking
+    # Clear lingering button artifacts by explicitly forcing unique state key mappings
     if 'tetris_board' not in st.session_state:
         st.session_state.tetris_board = [["⬛" for _ in range(T_COLS)] for _ in range(T_ROWS)]
         st.session_state.current_piece = get_random_piece()
@@ -371,14 +371,23 @@ elif app_mode == "🕹️Tetris":
             else:
                 lock_piece(piece)
 
-    # 1. Continuous Visual Refresh Layout Setup
+    # 1. Clear Screen Containers to prevent button duplication leak anomalies
     grid_placeholder = st.empty()
     score_placeholder = st.empty()
     controls_placeholder = st.empty()
 
-    # Process and build graphics layout frame layers dynamically
-    display_board = [row[:] for row in st.session_state.tetris_board]
-    if not st.session_state.t_game_over:
+    # CRITICAL: Intercept the game over condition instantly before running rendering calculations
+    if st.session_state.t_game_over:
+        grid_placeholder.empty()
+        score_placeholder.write(f"🏆 Final Score: **{st.session_state.t_score}**")
+        with controls_placeholder.container():
+            st.error("Game Over!")
+            if st.button("Play Again", key="reset_tetris_btn"):
+                reset_tetris()
+                st.rerun()
+    else:
+        # Compile Active Matrix Graphics Layer
+        display_board = [row[:] for row in st.session_state.tetris_board]
         p = st.session_state.current_piece
         for r_idx, row in enumerate(p["matrix"]):
             for c_idx, val in enumerate(row):
@@ -388,17 +397,11 @@ elif app_mode == "🕹️Tetris":
                     if 0 <= y_pos < T_ROWS and 0 <= x_pos < T_COLS:
                         display_board[y_pos][x_pos] = p["color"]
 
-    grid_string = "\n".join([" ".join(row) for row in display_board])
-    grid_placeholder.text(grid_string)
-    score_placeholder.write(f"🏆 Score: **{st.session_state.t_score}**")
+        grid_string = "\n".join([" ".join(row) for row in display_board])
+        grid_placeholder.text(grid_string)
+        score_placeholder.write(f"🏆 Score: **{st.session_state.t_score}**")
 
-    # 2. Controls Panel Interface Layout Layer
-    if st.session_state.t_game_over:
-        st.error("Game Over!")
-        if st.button("Play Again", key="reset_tetris_btn"):
-            reset_tetris()
-            st.rerun()
-    else:
+        # 2. Controls Panel Interface Layout Layer (Flushed Cleanly on loops)
         with controls_placeholder.container():
             st.write("--- Controls ---")
             col1, col2, col3 = st.columns(3)
@@ -415,7 +418,8 @@ elif app_mode == "🕹️Tetris":
                     run_tetris_step("RIGHT")
                     st.rerun()
 
-        # 3. Synchronized Continuous Fall Timer execution cycle step
+        # 3. Synchronized Continuous Fall Timer Execution Cycle Step
         time.sleep(0.300)
         run_tetris_step("DROP")
         st.rerun()
+
