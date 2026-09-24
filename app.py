@@ -304,12 +304,14 @@ elif app_mode == "🕹️Tetris":
         st.session_state.current_piece = get_random_piece()
         st.session_state.t_score = 0
         st.session_state.t_game_over = False
+        st.session_state.last_fall_time = time.time()
 
     def reset_tetris():
         st.session_state.tetris_board = [["⬛" for _ in range(T_COLS)] for _ in range(T_ROWS)]
         st.session_state.current_piece = get_random_piece()
         st.session_state.t_score = 0
         st.session_state.t_game_over = False
+        st.session_state.last_fall_time = time.time()
 
     def check_collision(piece, offset_x=0, offset_y=0, test_matrix=None):
         """Returns True if the piece collides with walls or locked blocks."""
@@ -377,17 +379,16 @@ elif app_mode == "🕹️Tetris":
             else:
                 lock_piece(piece)
 
-    # Check if a background auto-tick was sent from the hidden HTML timer
-    if st.context.headers.get("X-Tetris-Tick") == "true" or st.query_params.get("tick") == "1":
-        # Clear out URL query parameters to avoid looping on normal manual click refreshes
-        st.query_params.clear()
-        run_tetris_step("DROP")
+    # Wrap the active gameplay element inside a clean, independent auto-running fragment
+    @st.fragment(run_every=1.0)
+    def render_and_run_game():
+        # Handle the automatic drop timing checks internally every loop pass
+        current_time = time.time()
+        if current_time - st.session_state.last_fall_time >= 1.0:
+            run_tetris_step("DROP")
+            st.session_state.last_fall_time = current_time
 
-    # 1. UI Rendering Container
-    game_container = st.empty()
-
-    with game_container.container():
-        # Compile Display Frame Framework Layer
+        # Compile Display Frame Layer
         display_board = [row[:] for row in st.session_state.tetris_board]
         if not st.session_state.t_game_over:
             p = st.session_state.current_piece
@@ -399,45 +400,31 @@ elif app_mode == "🕹️Tetris":
                         if 0 <= y_pos < T_ROWS and 0 <= x_pos < T_COLS:
                             display_board[y_pos][x_pos] = p["color"]
 
-        # Draw matrix grid board and score panel
+        # Draw matrix board representation and user panel
         grid_string = "\n".join([" ".join(row) for row in display_board])
         st.text(grid_string)
         st.write(f"🏆 Score: **{st.session_state.t_score}**")
 
-    # 2. Game Loops Controls Dashboard & Navigation Panel (Without Drop Button)
-    if st.session_state.t_game_over:
-        st.error("Game Over!")
-        if st.button("Play Again", key="reset_tetris_btn"):
-            reset_tetris()
-            st.rerun()
-    else:
-        st.write("--- Controls ---")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("◀️ Left", key="t_left"):
-                run_tetris_step("LEFT")
+        if st.session_state.t_game_over:
+            st.error("Game Over!")
+            if st.button("Play Again", key="reset_tetris_btn"):
+                reset_tetris()
                 st.rerun()
-        with col2:
-            if st.button("🔄 Rotate", key="t_rotate"):
-                run_tetris_step("ROTATE")
-                st.rerun()
-        with col3:
-            if st.button("Right ▶️", key="t_right"):
-                run_tetris_step("RIGHT")
-                st.rerun()
+        else:
+            st.write("--- Controls ---")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.button("◀️ Left", key="t_left"):
+                    run_tetris_step("LEFT")
+                    st.rerun()
+            with col2:
+                if st.button("🔄 Rotate", key="t_rotate"):
+                    run_tetris_step("ROTATE")
+                    st.rerun()
+            with col3:
+                if st.button("Right ▶️", key="t_right"):
+                    run_tetris_step("RIGHT")
+                    st.rerun()
 
-        # 3. Background Fall Clock Engine (Triggers page reload step directly)
-        import streamlit.components.v1 as components
-        components.html(
-            """
-            <script>
-                setTimeout(function() {
-                    const url = new URL(window.parent.location.href);
-                    url.searchParams.set('tick', '1');
-                    window.parent.location.href = url.href;
-                }, 1000);
-            </script>
-            """,
-            height=0,
-            width=0,
-        )
+    # Call the auto-refresh loop context window
+    render_and_run_game()
