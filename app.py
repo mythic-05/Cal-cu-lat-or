@@ -275,7 +275,7 @@ elif app_mode == "👾 Space Invaders":
 # -------------------------------------------------------------
 elif app_mode == "🕹️Tetris":
     st.title("🕹️Tetris")
-    st.caption("Align horizontal rows! Blocks fall automatically every second.")
+    st.caption("Align horizontal rows! Blocks fall automatically at high speed.")
 
     T_ROWS, T_COLS = 12, 8
 
@@ -304,14 +304,12 @@ elif app_mode == "🕹️Tetris":
         st.session_state.current_piece = get_random_piece()
         st.session_state.t_score = 0
         st.session_state.t_game_over = False
-        st.session_state.last_fall_time = 0.1
 
     def reset_tetris():
         st.session_state.tetris_board = [["⬛" for _ in range(T_COLS)] for _ in range(T_ROWS)]
         st.session_state.current_piece = get_random_piece()
         st.session_state.t_score = 0
         st.session_state.t_game_over = False
-        st.session_state.last_fall_time = time.time()
 
     def check_collision(piece, offset_x=0, offset_y=0, test_matrix=None):
         """Returns True if the piece collides with walls or locked blocks."""
@@ -379,14 +377,13 @@ elif app_mode == "🕹️Tetris":
             else:
                 lock_piece(piece)
 
-    # Wrap the active gameplay element inside a clean, independent auto-running fragment
-    @st.fragment(run_every=1.0)
+    # Isolated gameplay segment container context window
+    @st.fragment
     def render_and_run_game():
-        # Handle the automatic drop timing checks internally every loop pass
-        current_time = time.time()
-        if current_time - st.session_state.last_fall_time >= 0.1:
+        # Handle incoming background macro gravity drops sent by the browser engine layer
+        if st.session_state.get("macro_drop_signal"):
+            st.session_state.macro_drop_signal = False
             run_tetris_step("DROP")
-            st.session_state.last_fall_time = current_time
 
         # Compile Display Frame Layer
         display_board = [row[:] for row in st.session_state.tetris_board]
@@ -426,5 +423,25 @@ elif app_mode == "🕹️Tetris":
                     run_tetris_step("RIGHT")
                     st.rerun()
 
-    # Call the auto-refresh loop context window
+            # Invisible continuous pipeline drop trigger button
+            if st.button("🔧", key="hidden_macro_drop", help="Engine step loop placeholder"):
+                st.session_state.macro_drop_signal = True
+                st.rerun()
+
+            # Browser engine macro clock - forces the hidden button to submit cleanly every 250ms
+            import streamlit.components.v1 as components
+            components.html(
+                """
+                <script>
+                    setTimeout(function() {
+                        const targetBtn = window.parent.document.querySelector('button[key="hidden_macro_drop"]');
+                        if (targetBtn) targetBtn.click();
+                    }, 250); // Drop velocity setting: 250ms interval loop pace
+                </script>
+                """,
+                height=0,
+                width=0,
+            )
+
+    # Call the game context wrapper window layer
     render_and_run_game()
