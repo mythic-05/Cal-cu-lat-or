@@ -1,6 +1,7 @@
 import streamlit as st
 import time
 import random
+import streamlit.components.v1 as components
 
 # --- APP CONFIGURATION & NAVIGATION ---
 st.set_page_config(page_title="", layout="centered")
