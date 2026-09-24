@@ -271,90 +271,137 @@ elif app_mode == "👾 Space Invaders":
                 st.rerun()
 
            
+import streamlit as None
+import time
+import random
+
 # -------------------------------------------------------------
-# PAGE 4: PLAYABLE TETRIS (TURN-BASED ENGINE)
+# PAGE 4: PLAYABLE TETRIS 
 # -------------------------------------------------------------
 elif app_mode == "🕹️Tetris":
     st.title("🕹️Tetris")
-    st.caption("Align horizontal rows using the arcade controls below to clear blocks!")
+    st.caption("Align horizontal rows! Blocks fall automatically every second.")
 
     T_ROWS, T_COLS = 12, 8
+
+    # Classic Tetris Tetromino Shapes & Colors
+    SHAPES = {
+        "I": {"matrix": [[1, 1, 1, 1]], "color": "🟪"},
+        "O": {"matrix": [[1, 1], [1, 1]], "color": "🟨"},
+        "T": {"matrix": [[0, 1, 0], [1, 1, 1]], "color": "🟥"},
+        "L": {"matrix": [[1, 0], [1, 0], [1, 1]], "color": "🟧"},
+        "J": {"matrix": [[0, 1], [0, 1], [1, 1]], "color": "🟦"},
+        "S": {"matrix": [[0, 1, 1], [1, 1, 0]], "color": "🟩"}
+    }
+
+    def get_random_piece():
+        name = random.choice(list(SHAPES.keys()))
+        return {
+            "matrix": SHAPES[name]["matrix"],
+            "color": SHAPES[name]["color"],
+            "x": T_COLS // 2 - len(SHAPES[name]["matrix"][0]) // 2,
+            "y": 0
+        }
 
     # Initialize Tetris session state tracking
     if 'tetris_board' not in st.session_state:
         st.session_state.tetris_board = [["⬛" for _ in range(T_COLS)] for _ in range(T_ROWS)]
-        st.session_state.block_x = 3
-        st.session_state.block_y = 0
+        st.session_state.current_piece = get_random_piece()
         st.session_state.t_score = 0
         st.session_state.t_game_over = False
 
     def reset_tetris():
         st.session_state.tetris_board = [["⬛" for _ in range(T_COLS)] for _ in range(T_ROWS)]
-        st.session_state.block_x = 3
-        st.session_state.block_y = 0
+        st.session_state.current_piece = get_random_piece()
         st.session_state.t_score = 0
         st.session_state.t_game_over = False
+
+    def check_collision(piece, offset_x=0, offset_y=0):
+        """Returns True if the piece collides with walls or locked blocks."""
+        matrix = piece["matrix"]
+        for r_idx, row in enumerate(matrix):
+            for c_idx, val in enumerate(row):
+                if val:
+                    new_x = piece["x"] + c_idx + offset_x
+                    new_y = piece["y"] + r_idx + offset_y
+                    # Check boundary limits
+                    if new_x < 0 or new_x >= T_COLS or new_y >= T_ROWS:
+                        return True
+                    # Check background static grid blocks
+                    if new_y >= 0 and st.session_state.tetris_board[new_y][new_x] != "⬛":
+                        return True
+        return False
+
+    def lock_piece(piece):
+        matrix = piece["matrix"]
+        color = piece["color"]
+        for r_idx, row in enumerate(matrix):
+            for c_idx, val in enumerate(row):
+                if val:
+                    y = piece["y"] + r_idx
+                    x = piece["x"] + c_idx
+                    if y >= 0:
+                        st.session_state.tetris_board[y][x] = color
+
+        # Check and clear completed rows
+        new_board = [row for row in st.session_state.tetris_board if "⬛" in row]
+        cleared_rows = T_ROWS - len(new_board)
+        
+        if cleared_rows > 0:
+            st.session_state.t_score += cleared_rows * 100
+            for _ in range(cleared_rows):
+                new_board.insert(0, ["⬛" for _ in range(T_COLS)])
+            st.session_state.tetris_board = new_board
+
+        # Spawn next shape piece
+        st.session_state.current_piece = get_random_piece()
+        if check_collision(st.session_state.current_piece):
+            st.session_state.t_game_over = True
 
     def run_tetris_step(action):
         if st.session_state.t_game_over:
             return
 
-        bx, by = st.session_state.block_x, st.session_state.block_y
+        piece = st.session_state.current_piece
 
-        # 1. Process Horizontal Inputs
-        if action == "LEFT" and bx > 0 and st.session_state.tetris_board[by][bx-1] == "⬛":
-            st.session_state.block_x -= 1
-        elif action == "RIGHT" and bx < T_COLS-1 and st.session_state.tetris_board[by][bx+1] == "⬛":
-            st.session_state.block_x += 1
+        if action == "LEFT" and not check_collision(piece, offset_x=-1):
+            piece["x"] -= 1
+        elif action == "RIGHT" and not check_collision(piece, offset_x=1):
+            piece["x"] += 1
+        elif action == "DROP":
+            if not check_collision(piece, offset_y=1):
+                piece["y"] += 1
+            else:
+                lock_piece(piece)
 
-        # Re-verify latest valid coordinates
-        current_x = st.session_state.block_x
-        next_y = st.session_state.block_y + 1
+    # 1. UI Rendering Container
+    game_container = st.empty()
 
-        # 2. Process Gravity Drop Logic
-        if next_y >= T_ROWS or st.session_state.tetris_board[next_y][current_x] != "⬛":
-            # Block hits an obstacle; permanently lock it down
-            st.session_state.tetris_board[st.session_state.block_y][current_x] = "🟦"
+    with game_container.container():
+        # Compile Display Frame Framework Layer
+        display_board = [row[:] for row in st.session_state.tetris_board]
+        if not st.session_state.t_game_over:
+            p = st.session_state.current_piece
+            for r_idx, row in enumerate(p["matrix"]):
+                for c_idx, val in enumerate(row):
+                    if val:
+                        y_pos = p["y"] + r_idx
+                        x_pos = p["x"] + c_idx
+                        if 0 <= y_pos < T_ROWS and 0 <= x_pos < T_COLS:
+                            display_board[y_pos][x_pos] = p["color"]
 
-            # Check and clear full rows
-            new_board = [row for row in st.session_state.tetris_board if "⬛" in row]
-            cleared_rows = T_ROWS - len(new_board)
-            
-            if cleared_rows > 0:
-                st.session_state.t_score += cleared_rows * 100
-                # Pad the top rows back out with empty spaces
-                for _ in range(cleared_rows):
-                    new_board.insert(0, ["⬛" for _ in range(T_COLS)])
-                st.session_state.tetris_board = new_board
+        # Draw matrix grid board and score panel
+        grid_string = "\n".join([" ".join(row) for row in display_board])
+        st.text(grid_string)
+        st.write(f"🏆 Score: **{st.session_state.t_score}**")
 
-            # Spawn a fresh block at the ceiling tracking point
-            st.session_state.block_x = 3
-            st.session_state.block_y = 0
-
-            # Instant Game Over ceiling collision check
-            if st.session_state.tetris_board[0][3] != "⬛":
-                st.session_state.t_game_over = True
-        else:
-            # Drop block down by 1 frame row
-            st.session_state.block_y = next_y
-
-    # Build the display framework grid frame layer
-    display_board = [row[:] for row in st.session_state.tetris_board]
-    if not st.session_state.t_game_over:
-        display_board[st.session_state.block_y][st.session_state.block_x] = "🟨"
-
-    # Draw game grid and score tracker framework layout
-    grid_string = "\n".join([" ".join(row) for row in display_board])
-    st.text(grid_string)
-    st.write(f"🏆 Score: **{st.session_state.t_score}**")
-
+    # 2. Game Loops Controls Dashboard & Navigation Panel
     if st.session_state.t_game_over:
-        st.error("Matrix filled to the ceiling! Game Over.")
+        st.error("Game Over!")
         if st.button("Play Again", key="reset_tetris_btn"):
             reset_tetris()
             st.rerun()
     else:
-        # Visual Control Interface Row Setup Panel
         st.write("--- Controls ---")
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -363,9 +410,15 @@ elif app_mode == "🕹️Tetris":
                 st.rerun()
         with col2:
             if st.button("🔽 Drop Step", key="t_down"):
-                run_tetris_step("DOWN")
+                run_tetris_step("DROP")
                 st.rerun()
         with col3:
             if st.button("Right ▶️", key="t_right"):
                 run_tetris_step("RIGHT")
                 st.rerun()
+
+        # 3. Automatic Gravity Heartbeat ticker loop 
+        # Delays script execution for 1 second, runs a drop frame, then forces a script redraw
+        time.sleep(1.0)
+        run_tetris_step("DROP")
+        st.rerun()
