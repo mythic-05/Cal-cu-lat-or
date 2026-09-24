@@ -9,7 +9,7 @@ st.set_page_config(page_title="", layout="centered")
 st.sidebar.title(" Applications ")
 app_mode = st.sidebar.radio(
     "Choose a tool to load:",
-    ["🔢 Calculator", "🐍 Snake", "👾 Space Invaders"]
+    ["🔢 Calculator", "🐍 Snake", "👾 Space Invaders, "🕹️Tetris"]
 )
 
 # -------------------------------------------------------------
@@ -271,3 +271,101 @@ elif app_mode == "👾 Space Invaders":
                 st.rerun()
 
            
+# -------------------------------------------------------------
+# PAGE 4: PLAYABLE TETRIS (TURN-BASED ENGINE)
+# -------------------------------------------------------------
+elif app_mode == "🧱 Tetris":
+    st.title("🧱 Tetris")
+    st.caption("Align horizontal rows using the arcade controls below to clear blocks!")
+
+    T_ROWS, T_COLS = 12, 8
+
+    # Initialize Tetris session state tracking
+    if 'tetris_board' not in st.session_state:
+        st.session_state.tetris_board = [["⬛" for _ in range(T_COLS)] for _ in range(T_ROWS)]
+        st.session_state.block_x = 3
+        st.session_state.block_y = 0
+        st.session_state.t_score = 0
+        st.session_state.t_game_over = False
+
+    def reset_tetris():
+        st.session_state.tetris_board = [["⬛" for _ in range(T_COLS)] for _ in range(T_ROWS)]
+        st.session_state.block_x = 3
+        st.session_state.block_y = 0
+        st.session_state.t_score = 0
+        st.session_state.t_game_over = False
+
+    def run_tetris_step(action):
+        if st.session_state.t_game_over:
+            return
+
+        bx, by = st.session_state.block_x, st.session_state.block_y
+
+        # 1. Process Horizontal Inputs
+        if action == "LEFT" and bx > 0 and st.session_state.tetris_board[by][bx-1] == "⬛":
+            st.session_state.block_x -= 1
+        elif action == "RIGHT" and bx < T_COLS-1 and st.session_state.tetris_board[by][bx+1] == "⬛":
+            st.session_state.block_x += 1
+
+        # Re-verify latest valid coordinates
+        current_x = st.session_state.block_x
+        next_y = st.session_state.block_y + 1
+
+        # 2. Process Gravity Drop Logic
+        if next_y >= T_ROWS or st.session_state.tetris_board[next_y][current_x] != "⬛":
+            # Block hits an obstacle; permanently lock it down
+            st.session_state.tetris_board[st.session_state.block_y][current_x] = "🟦"
+
+            # Check and clear full rows
+            new_board = [row for row in st.session_state.tetris_board if "⬛" in row]
+            cleared_rows = T_ROWS - len(new_board)
+            
+            if cleared_rows > 0:
+                st.session_state.t_score += cleared_rows * 100
+                # Pad the top rows back out with empty spaces
+                for _ in range(cleared_rows):
+                    new_board.insert(0, ["⬛" for _ in range(T_COLS)])
+                st.session_state.tetris_board = new_board
+
+            # Spawn a fresh block at the ceiling tracking point
+            st.session_state.block_x = 3
+            st.session_state.block_y = 0
+
+            # Instant Game Over ceiling collision check
+            if st.session_state.tetris_board[0][3] != "⬛":
+                st.session_state.t_game_over = True
+        else:
+            # Drop block down by 1 frame row
+            st.session_state.block_y = next_y
+
+    # Build the display framework grid frame layer
+    display_board = [row[:] for row in st.session_state.tetris_board]
+    if not st.session_state.t_game_over:
+        display_board[st.session_state.block_y][st.session_state.block_x] = "🟨"
+
+    # Draw game grid and score tracker framework layout
+    grid_string = "\n".join([" ".join(row) for row in display_board])
+    st.text(grid_string)
+    st.write(f"🏆 Score: **{st.session_state.t_score}**")
+
+    if st.session_state.t_game_over:
+        st.error("Matrix filled to the ceiling! Game Over.")
+        if st.button("Play Again", key="reset_tetris_btn"):
+            reset_tetris()
+            st.rerun()
+    else:
+        # Visual Control Interface Row Setup Panel
+        st.write("--- Controls ---")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("◀️ Left", key="t_left"):
+                run_tetris_step("LEFT")
+                st.rerun()
+        with col2:
+            if st.button("🔽 Drop Step", key="t_down"):
+                run_tetris_step("DOWN")
+                st.rerun()
+        with col3:
+            if st.button("Right ▶️", key="t_right"):
+                run_tetris_step("RIGHT")
+                st.rerun()
