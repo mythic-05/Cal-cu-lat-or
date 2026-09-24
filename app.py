@@ -384,7 +384,7 @@ elif app_mode == "🕹️Tetris":
     def render_and_run_game():
         # Handle the automatic drop timing checks internally every loop pass
         current_time = time.time()
-        if current_time - st.session_state.last_fall_time >= 0.5:
+        if current_time - st.session_state.last_fall_time >= 0.1:
             run_tetris_step("DROP")
             st.session_state.last_fall_time = current_time
 
