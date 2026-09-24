@@ -8,57 +8,27 @@ st.set_page_config(page_title="", layout="centered")
 st.sidebar.title(" Applications ")
 app_mode = st.sidebar.radio(
     "Choose a tool to load:",
-    ["Calc which is short for Calculator I'm just using slang", "Calculator", "🐍 Snake"]
+    ["🔢Calculator", "🐍 Snake", "👾Space Invaders"]
 )
 
 # -------------------------------------------------------------
-# PAGE 1: YOUR ORIGINAL JOKE CALCULATOR
+# PAGE 1: REAL FUNCTIONAL CALCULATOR 
 # -------------------------------------------------------------
-if app_mode == "Calc which is short for Calculator I'm just using slang":
-    st.title("Calc is short for Calculator")
-    st.caption("Enter numbers to check database sync status or activate payload triggers.")
-
-    # 1st Number Input
-    num1 = st.number_input("1st Number:", value=0.0, step=1.0, key="joke_num1")
-
-    # Custom text triggers for the 1st number
-    if num1 == 67:
-        st.error("unfunny")
-    elif num1 != 0:
-        st.info("Number added to database")
-
-    # 2nd Number Input
-    num2 = st.number_input("2nd Number:", value=0.0, step=1.0, key="joke_num2")
-
-    # Custom text triggers for the 2nd number
-    if num2 == 67:
-        st.error("67 in the big 26 🥀")
-    elif num2 != 0:
-        st.info("Adding...")
-
-    # Action Button
-    if st.button("Calculate Result", key="joke_btn"):
-        st.subheader("---Result---")
-        result = num1 + num2
-
-        # Secret Easter Egg Conditions
-        if num1 == 67 and num2 == 67:
-            st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly. Its traveling to you there because the missle knows where it is by knowing where it isn't")
-        elif num1 == 9 and num2 == 10:
-            st.success("🗣️ 21 YOU STUPID")
-        else:
-            st.success(f"Answer: {result}")
-
-
-# -------------------------------------------------------------
-# PAGE 2: REAL FUNCTIONAL CALCULATOR (SOMETHING USEFUL)
-# -------------------------------------------------------------
-elif app_mode == "Calculator":
+if app_mode == "Calculator":
     st.title("🔢 Calculator")
-    st.caption("A clean, functional calculator for standard arithmetic and utility math.")
+    st.caption("For those who just joined the stream calc is short for Calculator i'm just using slang")
 
     val1 = st.number_input("First Number (x):", value=0.0, step=0.1, key="pro_val1")
+    
+    # Text trigger for the first input number
+    if val1 == 67:
+        st.error("unfunny")
+
     val2 = st.number_input("Second Number (y):", value=0.0, step=0.1, key="pro_val2")
+    
+    # Text trigger for the second input number
+    if val2 == 67:
+        st.error("67 in the big 26 🥀")
     
     operation = st.selectbox(
         "Select Operation:",
@@ -133,7 +103,7 @@ elif app_mode == "Calculator":
 
 
 # -------------------------------------------------------------
-# PAGE 3: PLAYABLE SNAKE GAME (INSTANT TURN-BASED REWRITE)
+# PAGE 2: PLAYABLE SNAKE GAME 
 # -------------------------------------------------------------
 elif app_mode == "🐍 Snake":
     st.title("🐍 Web Arcade: Snake")
@@ -238,9 +208,104 @@ elif app_mode == "🐍 Snake":
             if st.button("▶️ Right"):
                 move_snake("RIGHT")
                 st.rerun()
-#Row 3: Down Buttonc
-                ol7, col8, col9 = st.columns(3)
-                with col8:
-                if st.button("🔽 Down"):
-                 move_snake("DOWN")
-                 st.rerun()
+                
+        # Row 3: Down Button
+        col7, col8, col9 = st.columns(3)
+        with col8:
+            if st.button("🔽 Down"):
+                move_snake("DOWN")
+                st.rerun()
+
+
+# -------------------------------------------------------------
+# PAGE CODE: SPACE INVADERS
+# -------------------------------------------------------------
+st.title("👾 Space Invaders")
+st.caption("Move your ship and fire lasers to clear the descending alien fleet!")
+
+# Initialize state variables
+if 'player_x' not in st.session_state:
+    st.session_state.player_x = 4
+    st.session_state.invaders = [(1, 1), (3, 1), (5, 1), (7, 1), (2, 2), (4, 2), (6, 2)]
+    st.session_state.lasers = []
+    st.session_state.si_score = 0
+    st.session_state.si_game_over = False
+
+def run_si_turn(action):
+    if st.session_state.si_game_over:
+        return
+
+    # 1. Player Action
+    if action == "LEFT" and st.session_state.player_x > 0:
+        st.session_state.player_x -= 1
+    elif action == "RIGHT" and st.session_state.player_x < 9:
+        st.session_state.player_x += 1
+    elif action == "FIRE":
+        st.session_state.lasers.append((st.session_state.player_x, 8))
+
+    # 2. Move Lasers Upward
+    new_lasers = []
+    for lx, ly in st.session_state.lasers:
+        if ly > 0:
+            new_lasers.append((lx, ly - 1))
+    st.session_state.lasers = new_lasers
+
+    # 3. Collision Logic (Laser hits Invader)
+    remaining_invaders = []
+    for ix, iy in st.session_state.invaders:
+        hit = False
+        for lx, ly in st.session_state.lasers:
+            if lx == ix and ly == iy:
+                hit = True
+                st.session_state.lasers.remove((lx, ly))
+                st.session_state.si_score += 10
+                break
+        if not hit:
+            remaining_invaders.append((ix, iy))
+    st.session_state.invaders = remaining_invaders
+
+    # 4. Automate Invader Descent (Random chance each step)
+    import random
+    if random.random() < 0.35 and len(st.session_state.invaders) > 0:
+        new_invaders = []
+        for ix, iy in st.session_state.invaders:
+            if iy + 1 >= 9:
+                st.session_state.si_game_over = True
+            new_invaders.append((ix, iy + 1))
+        st.session_state.invaders = new_invaders
+
+    # Victory check
+    if len(st.session_state.invaders) == 0:
+        # Spawn fresh tougher wave
+        st.session_state.invaders = [(1, 1), (3, 1), (5, 1), (7, 1), (2, 2), (4, 2), (6, 2)]
+
+# Draw Grid Screen
+si_grid = [["⬛" for _ in range(10)] for _ in range(10)]
+if not st.session_state.si_game_over:
+    for ix, iy in st.session_state.invaders:
+        si_grid[iy][ix] = "🛸"
+    for lx, ly in st.session_state.lasers:
+        si_grid[ly][lx] = "⚡"
+    si_grid[9][st.session_state.player_x] = "🚀"
+
+st.text("\n".join([" ".join(row) for row in si_grid]))
+st.write(f"🏆 Score: **{st.session_state.si_score}**")
+
+if st.session_state.si_game_over:
+    st.error("Your ship was overrun!")
+    if st.button("Respawn Fleet"):
+        del st.session_state.player_x
+        st.rerun()
+else:
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("◀️ Move Left"):
+            run_si_turn("LEFT"); st.rerun()
+    with col2:
+        if st.button("🔥 Fire Laser"):
+            run_si_turn("FIRE"); st.rerun()
+    with col3:
+        if st.button("Move Right ▶️"):
+            run_si_turn("RIGHT"); st.rerun()
+
+
