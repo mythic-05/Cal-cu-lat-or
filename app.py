@@ -271,11 +271,11 @@ elif app_mode == "👾 Space Invaders":
                 st.rerun()
 
 # -------------------------------------------------------------
-# PAGE 4: PLAYABLE TETRIS 
+# PAGE 4: PLAYABLE TETRIS (NATIVE REFRESH ENGINE)
 # -------------------------------------------------------------
 elif app_mode == "🕹️Tetris":
     st.title("🕹️Tetris")
-    st.caption("Align horizontal rows! Blocks fall automatically at extreme speed.")
+    st.caption("Align horizontal rows! Blocks fall automatically at high speed.")
 
     T_ROWS, T_COLS = 12, 8
 
@@ -312,17 +312,14 @@ elif app_mode == "🕹️Tetris":
         st.session_state.t_game_over = False
 
     def check_collision(piece, offset_x=0, offset_y=0, test_matrix=None):
-        """Returns True if the piece collides with walls or locked blocks."""
         matrix = test_matrix if test_matrix is not None else piece["matrix"]
         for r_idx, row in enumerate(matrix):
             for c_idx, val in enumerate(row):
                 if val:
                     new_x = piece["x"] + c_idx + offset_x
                     new_y = piece["y"] + r_idx + offset_y
-                    # Check boundary limits
                     if new_x < 0 or new_x >= T_COLS or new_y >= T_ROWS:
                         return True
-                    # Check background static grid blocks
                     if new_y >= 0 and st.session_state.tetris_board[new_y][new_x] != "⬛":
                         return True
         return False
@@ -338,7 +335,6 @@ elif app_mode == "🕹️Tetris":
                     if y >= 0:
                         st.session_state.tetris_board[y][x] = color
 
-        # Check and clear completed rows
         new_board = [row for row in st.session_state.tetris_board if "⬛" in row]
         cleared_rows = T_ROWS - len(new_board)
         
@@ -348,13 +344,11 @@ elif app_mode == "🕹️Tetris":
                 new_board.insert(0, ["⬛" for _ in range(T_COLS)])
             st.session_state.tetris_board = new_board
 
-        # Spawn next shape piece
         st.session_state.current_piece = get_random_piece()
         if check_collision(st.session_state.current_piece):
             st.session_state.t_game_over = True
 
     def rotate_matrix(matrix):
-        """Rotates a 2D matrix 90 degrees clockwise."""
         return [list(x) for x in zip(*matrix[::-1])]
 
     def run_tetris_step(action):
@@ -377,32 +371,35 @@ elif app_mode == "🕹️Tetris":
             else:
                 lock_piece(piece)
 
-    # Isolated gameplay segment container context window
-    @st.fragment
-    def render_and_run_game():
-        # Compile Display Frame Layer
-        display_board = [row[:] for row in st.session_state.tetris_board]
-        if not st.session_state.t_game_over:
-            p = st.session_state.current_piece
-            for r_idx, row in enumerate(p["matrix"]):
-                for c_idx, val in enumerate(row):
-                    if val:
-                        y_pos = p["y"] + r_idx
-                        x_pos = p["x"] + c_idx
-                        if 0 <= y_pos < T_ROWS and 0 <= x_pos < T_COLS:
-                            display_board[y_pos][x_pos] = p["color"]
+    # 1. Continuous Visual Refresh Layout Setup
+    grid_placeholder = st.empty()
+    score_placeholder = st.empty()
+    controls_placeholder = st.empty()
 
-        # Draw matrix board representation and user panel
-        grid_string = "\n".join([" ".join(row) for row in display_board])
-        st.text(grid_string)
-        st.write(f"🏆 Score: **{st.session_state.t_score}**")
+    # Process and build graphics layout frame layers dynamically
+    display_board = [row[:] for row in st.session_state.tetris_board]
+    if not st.session_state.t_game_over:
+        p = st.session_state.current_piece
+        for r_idx, row in enumerate(p["matrix"]):
+            for c_idx, val in enumerate(row):
+                if val:
+                    y_pos = p["y"] + r_idx
+                    x_pos = p["x"] + c_idx
+                    if 0 <= y_pos < T_ROWS and 0 <= x_pos < T_COLS:
+                        display_board[y_pos][x_pos] = p["color"]
 
-        if st.session_state.t_game_over:
-            st.error("Game Over!")
-            if st.button("Play Again", key="reset_tetris_btn"):
-                reset_tetris()
-                st.rerun()
-        else:
+    grid_string = "\n".join([" ".join(row) for row in display_board])
+    grid_placeholder.text(grid_string)
+    score_placeholder.write(f"🏆 Score: **{st.session_state.t_score}**")
+
+    # 2. Controls Panel Interface Layout Layer
+    if st.session_state.t_game_over:
+        st.error("Game Over!")
+        if st.button("Play Again", key="reset_tetris_btn"):
+            reset_tetris()
+            st.rerun()
+    else:
+        with controls_placeholder.container():
             st.write("--- Controls ---")
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -418,47 +415,7 @@ elif app_mode == "🕹️Tetris":
                     run_tetris_step("RIGHT")
                     st.rerun()
 
-            # High-speed data-binding script callback 
-            def on_clock_tick():
-                run_tetris_step("DROP")
-
-            # Silent invisible UI tracking state to capture background signals
-            st.number_input(
-                "game_clock", 
-                value=0, 
-                key="hidden_game_timer", 
-                on_change=on_clock_tick, 
-                label_visibility="collapsed"
-            )
-
-            # High-performance iframe clock communicating directly with the state
-            import streamlit.components.v1 as components
-            components.html(
-                """
-                <script>
-                    setTimeout(function() {
-                        const inputs = window.parent.document.querySelectorAll('input[type="number"]');
-                        let clockInput = null;
-                        for (let input of inputs) {
-                            if (input.getAttribute('aria-label') === 'game_clock' || input.id && input.id.includes('hidden_game_timer')) {
-                                clockInput = input;
-                                break;
-                            }
-                        }
-                        
-                        if (clockInput) {
-                            let currentVal = parseInt(clockInput.value) || 0;
-                            clockInput.value = currentVal + 1;
-                            
-                            clockInput.dispatchEvent(new Event('change', { bubbles: true }));
-                            clockInput.dispatchEvent(new Event('blur', { bubbles: true }));
-                        }
-                    }, 150); // Velocity acceleration set to exactly 150ms
-                </script>
-                """,
-                height=0,
-                width=0,
-            )
-
-    # Call the game context wrapper window layer
-    render_and_run_game()
+        # 3. Synchronized Continuous Fall Timer execution cycle step
+        time.sleep(0.150)
+        run_tetris_step("DROP")
+        st.rerun()
