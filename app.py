@@ -377,6 +377,12 @@ elif app_mode == "🕹️Tetris":
             else:
                 lock_piece(piece)
 
+    # Check if a background auto-tick was sent from the hidden HTML timer
+    if st.context.headers.get("X-Tetris-Tick") == "true" or st.query_params.get("tick") == "1":
+        # Clear out URL query parameters to avoid looping on normal manual click refreshes
+        st.query_params.clear()
+        run_tetris_step("DROP")
+
     # 1. UI Rendering Container
     game_container = st.empty()
 
@@ -398,7 +404,7 @@ elif app_mode == "🕹️Tetris":
         st.text(grid_string)
         st.write(f"🏆 Score: **{st.session_state.t_score}**")
 
-    # 2. Game Loops Controls Dashboard & Navigation Panel
+    # 2. Game Loops Controls Dashboard & Navigation Panel (Without Drop Button)
     if st.session_state.t_game_over:
         st.error("Game Over!")
         if st.button("Play Again", key="reset_tetris_btn"):
@@ -406,7 +412,7 @@ elif app_mode == "🕹️Tetris":
             st.rerun()
     else:
         st.write("--- Controls ---")
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("◀️ Left", key="t_left"):
                 run_tetris_step("LEFT")
@@ -416,22 +422,19 @@ elif app_mode == "🕹️Tetris":
                 run_tetris_step("ROTATE")
                 st.rerun()
         with col3:
-            if st.button("🔽 Drop", key="t_down"):
-                run_tetris_step("DROP")
-                st.rerun()
-        with col4:
             if st.button("Right ▶️", key="t_right"):
                 run_tetris_step("RIGHT")
                 st.rerun()
 
-        # 3. Native Background Heartbeat Ticker
-        # Automatically clicks the hidden or visible 'Drop' button every 1 second to keep game moving smoothly
+        # 3. Background Fall Clock Engine (Triggers page reload step directly)
         import streamlit.components.v1 as components
         components.html(
             """
             <script>
                 setTimeout(function() {
-                    window.parent.document.querySelector('button[key="t_down"]').click();
+                    const url = new URL(window.parent.location.href);
+                    url.searchParams.set('tick', '1');
+                    window.parent.location.href = url.href;
                 }, 1000);
             </script>
             """,
