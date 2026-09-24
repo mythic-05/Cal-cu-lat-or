@@ -9,7 +9,7 @@ st.set_page_config(page_title="", layout="centered")
 st.sidebar.title(" Applications ")
 app_mode = st.sidebar.radio(
     "Choose a tool to load:",
-    ["🔢 Calculator", "🐍 Snake", "👾 Space Invaders, "🕹️Tetris"]
+    ["🔢 Calculator", "🐍 Snake", "👾 Space Invaders", "🕹️Tetris"]
 )
 
 # -------------------------------------------------------------
