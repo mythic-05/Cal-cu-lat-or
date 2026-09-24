@@ -270,7 +270,6 @@ elif app_mode == "👾 Space Invaders":
                 run_si_turn("RIGHT")
                 st.rerun()
 
-           
 # -------------------------------------------------------------
 # PAGE 4: PLAYABLE TETRIS 
 # -------------------------------------------------------------
@@ -312,9 +311,9 @@ elif app_mode == "🕹️Tetris":
         st.session_state.t_score = 0
         st.session_state.t_game_over = False
 
-    def check_collision(piece, offset_x=0, offset_y=0):
+    def check_collision(piece, offset_x=0, offset_y=0, test_matrix=None):
         """Returns True if the piece collides with walls or locked blocks."""
-        matrix = piece["matrix"]
+        matrix = test_matrix if test_matrix is not None else piece["matrix"]
         for r_idx, row in enumerate(matrix):
             for c_idx, val in enumerate(row):
                 if val:
@@ -354,6 +353,10 @@ elif app_mode == "🕹️Tetris":
         if check_collision(st.session_state.current_piece):
             st.session_state.t_game_over = True
 
+    def rotate_matrix(matrix):
+        """Rotates a 2D matrix 90 degrees clockwise."""
+        return [list(x) for x in zip(*matrix[::-1])]
+
     def run_tetris_step(action):
         if st.session_state.t_game_over:
             return
@@ -364,6 +367,10 @@ elif app_mode == "🕹️Tetris":
             piece["x"] -= 1
         elif action == "RIGHT" and not check_collision(piece, offset_x=1):
             piece["x"] += 1
+        elif action == "ROTATE":
+            rotated = rotate_matrix(piece["matrix"])
+            if not check_collision(piece, offset_x=0, offset_y=0, test_matrix=rotated):
+                piece["matrix"] = rotated
         elif action == "DROP":
             if not check_collision(piece, offset_y=1):
                 piece["y"] += 1
@@ -399,22 +406,35 @@ elif app_mode == "🕹️Tetris":
             st.rerun()
     else:
         st.write("--- Controls ---")
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
             if st.button("◀️ Left", key="t_left"):
                 run_tetris_step("LEFT")
                 st.rerun()
         with col2:
-            if st.button("🔽 Drop Step", key="t_down"):
-                run_tetris_step("DROP")
+            if st.button("🔄 Rotate", key="t_rotate"):
+                run_tetris_step("ROTATE")
                 st.rerun()
         with col3:
+            if st.button("🔽 Drop", key="t_down"):
+                run_tetris_step("DROP")
+                st.rerun()
+        with col4:
             if st.button("Right ▶️", key="t_right"):
                 run_tetris_step("RIGHT")
                 st.rerun()
 
-        # 3. Automatic Gravity Heartbeat ticker loop 
-        # Delays script execution for 1 second, runs a drop frame, then forces a script redraw
-        time.sleep(1.0)
-        run_tetris_step("DROP")
-        st.rerun()
+        # 3. Native Background Heartbeat Ticker
+        # Automatically clicks the hidden or visible 'Drop' button every 1 second to keep game moving smoothly
+        import streamlit.components.v1 as components
+        components.html(
+            """
+            <script>
+                setTimeout(function() {
+                    window.parent.document.querySelector('button[key="t_down"]').click();
+                }, 1000);
+            </script>
+            """,
+            height=0,
+            width=0,
+        )
