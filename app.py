@@ -275,7 +275,7 @@ elif app_mode == "👾 Space Invaders":
 # -------------------------------------------------------------
 elif app_mode == "🕹️Tetris":
     st.title("🕹️Tetris")
-    st.caption("Align horizontal rows! Blocks fall automatically at high speed.")
+    st.caption("Align horizontal rows! Blocks fall automatically at extreme speed.")
 
     T_ROWS, T_COLS = 12, 8
 
@@ -380,11 +380,6 @@ elif app_mode == "🕹️Tetris":
     # Isolated gameplay segment container context window
     @st.fragment
     def render_and_run_game():
-        # Handle incoming background macro gravity drops sent by the browser engine layer
-        if st.session_state.get("macro_drop_signal"):
-            st.session_state.macro_drop_signal = False
-            run_tetris_step("DROP")
-
         # Compile Display Frame Layer
         display_board = [row[:] for row in st.session_state.tetris_board]
         if not st.session_state.t_game_over:
@@ -423,20 +418,42 @@ elif app_mode == "🕹️Tetris":
                     run_tetris_step("RIGHT")
                     st.rerun()
 
-            # Invisible continuous pipeline drop trigger button
-            if st.button("🔧", key="hidden_macro_drop", help="Engine step loop placeholder"):
-                st.session_state.macro_drop_signal = True
-                st.rerun()
+            # High-speed data-binding script callback 
+            def on_clock_tick():
+                run_tetris_step("DROP")
 
-            # Browser engine macro clock - forces the hidden button to submit cleanly every 250ms
+            # Silent invisible UI tracking state to capture background signals
+            st.number_input(
+                "game_clock", 
+                value=0, 
+                key="hidden_game_timer", 
+                on_change=on_clock_tick, 
+                label_visibility="collapsed"
+            )
+
+            # High-performance iframe clock communicating directly with the state
             import streamlit.components.v1 as components
             components.html(
                 """
                 <script>
                     setTimeout(function() {
-                        const targetBtn = window.parent.document.querySelector('button[key="hidden_macro_drop"]');
-                        if (targetBtn) targetBtn.click();
-                    }, 250); // Drop velocity setting: 250ms interval loop pace
+                        const inputs = window.parent.document.querySelectorAll('input[type="number"]');
+                        let clockInput = null;
+                        for (let input of inputs) {
+                            if (input.getAttribute('aria-label') === 'game_clock' || input.id && input.id.includes('hidden_game_timer')) {
+                                clockInput = input;
+                                break;
+                            }
+                        }
+                        
+                        if (clockInput) {
+                            let currentVal = parseInt(clockInput.value) || 0;
+                            clockInput.value = currentVal + 1;
+                            
+                            clockInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            clockInput.dispatchEvent(new Event('blur', { bubbles: true }));
+                        }
+                    }, 150); // Velocity acceleration set to exactly 150ms
                 </script>
                 """,
                 height=0,
