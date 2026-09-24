@@ -179,6 +179,28 @@ elif app_mode == "🐍 Snake":
 
     if st.session_state.game_over:
         st.error("Game Over!")
+            if st.session_state.game_over:
+        import random
+        
+        # Pool of random roasts/hints
+        hints = [
+            "Maybe pay attention next time?",
+            "Hey idiot the apples over there",
+            "Maybe don't spam?",
+            "Nice one!",
+            "imagine losing in snake lmfao"
+        ]
+        
+        # Pick a random hint to show
+        random_hint = random.choice(hints)
+        
+        # Displays "Game Over!" along with the hint in a yellow warning box
+        st.warning(f"Game Over! — {random_hint}")
+        
+        if st.button("Play Again"):
+            reset_game()
+            st.rerun()
+
         if st.button("Play Again"):
             reset_game()
             st.rarun = True # Triggers UI refresh safely
