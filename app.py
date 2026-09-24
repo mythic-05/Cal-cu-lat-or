@@ -128,12 +128,15 @@ elif app_mode == "🐍 Snake":
         st.session_state.food = (2, 2)
         st.session_state.score = 0
         st.session_state.game_over = False
+    if 'current_hint' not in st.session_state:
+        st.session_state.current_hint = ""
 
     def reset_game():
         st.session_state.snake = [(5, 5), (5, 6), (5, 7)]
         st.session_state.food = (3, 3)
         st.session_state.score = 0
         st.session_state.game_over = False
+        st.session_state.current_hint = ""
 
     # Centralized physics step execution function
     def move_snake(next_dir):
@@ -154,6 +157,17 @@ elif app_mode == "🐍 Snake":
             head_y < 0 or head_y >= GRID_SIZE or 
             new_head in st.session_state.snake):
             st.session_state.game_over = True
+            
+            # Select the random insult once right at death
+            import random
+            hints = [
+                "Maybe pay attention next time?",
+                "Hey idiot the apples over there",
+                "Maybe don't spam?",
+                "Nice one!",
+                "imagine losing in snake lmfao"
+            ]
+            st.session_state.current_hint = random.choice(hints)
         else:
             st.session_state.snake.insert(0, new_head)
             if new_head == st.session_state.food:
@@ -179,31 +193,10 @@ elif app_mode == "🐍 Snake":
 
     if st.session_state.game_over:
         st.error("Game Over!")
-            if st.session_state.game_over:
-        import random
-        
-        # Pool of random roasts/hints
-        hints = [
-            "Maybe pay attention next time?",
-            "Hey idiot the apples over there",
-            "Maybe don't spam?",
-            "Nice one!",
-            "imagine losing in snake lmfao"
-        ]
-        
-        # Pick a random hint to show
-        random_hint = random.choice(hints)
-        
-        # Displays "Game Over!" along with the hint in a yellow warning box
-        st.warning(f"Game Over! — {random_hint}")
+        st.warning(st.session_state.current_hint)
         
         if st.button("Play Again"):
             reset_game()
-            st.rerun()
-
-        if st.button("Play Again"):
-            reset_game()
-            st.rarun = True # Triggers UI refresh safely
             st.rerun()
     else:
         # Visual Arcade Controller Interface
@@ -222,15 +215,17 @@ elif app_mode == "🐍 Snake":
             if st.button("◀️ Left"):
                 move_snake("LEFT")
                 st.rerun()
+        with col5:
+            st.write("🕹️ D-Pad")
         with col6:
             if st.button("▶️ Right"):
                 move_snake("RIGHT")
                 st.rerun()
                 
-        # Row 3: Down Button (Now properly un-indented outside of col6!)
+        # Row 3: Down Button
         col7, col8, col9 = st.columns(3)
         with col8:
             if st.button("🔽 Down"):
                 move_snake("DOWN")
-                st.rerun() 
+                st.rerun()
 
