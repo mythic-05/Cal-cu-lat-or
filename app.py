@@ -217,9 +217,6 @@ elif app_mode == "🐍 Snake":
                 st.rerun()
 
 
-# -------------------------------------------------------------
-# PAGE CODE: SPACE INVADERS
-# -------------------------------------------------------------
 st.title("👾 Space Invaders")
 st.caption("Move your ship and fire lasers to clear the descending alien fleet!")
 
