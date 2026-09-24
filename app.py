@@ -167,54 +167,73 @@ elif app_mode == "🐍 Snake":
                 move_snake("DOWN"); st.rerun()
 
 # -------------------------------------------------------------
-# PAGE 3: PLAYABLE SPACE INVADERS
+# PAGE 3: PLAYABLE SPACE INVADERS (PERSISTENT FASTER LASER)
 # -------------------------------------------------------------
 elif app_mode == "👾 Space Invaders":
     st.title("👾 Space Invaders")
     st.caption("Move your ship and fire lasers to clear the descending alien fleet!")
 
+    # Initialize state variables safely
     if 'player_x' not in st.session_state:
         st.session_state.player_x = 4
         st.session_state.invaders = [(1, 1), (3, 1), (5, 1), (7, 1), (2, 2), (4, 2), (6, 2)]
         st.session_state.si_score = 0
+        st.session_state.active_laser = None  # Tracks a persistent tuple: (laser_x, laser_y)
         st.session_state.si_game_over = False
 
-    def draw_and_render_grid(laser_pos=None):
+    def draw_and_render_grid():
+        """Helper function to draw the current frame to the screen"""
         si_grid = [["⬛" for _ in range(10)] for _ in range(10)]
         if not st.session_state.si_game_over:
             for ix, iy in st.session_state.invaders:
                 si_grid[iy][ix] = "🛸"
-            if laser_pos:
-                lx, ly = laser_pos
+            if st.session_state.active_laser:
+                lx, ly = st.session_state.active_laser
                 si_grid[ly][lx] = "⚡"
             si_grid[9][st.session_state.player_x] = "🚀"
         return "\n".join([" ".join(row) for row in si_grid])
 
+    # Screen visual containers
     grid_placeholder = st.empty()
     score_placeholder = st.empty()
-    grid_placeholder.text(draw_and_render_grid())
-    score_placeholder.write(f"🏆 Score: **{st.session_state.si_score}**")
 
     def run_si_turn(action):
         if st.session_state.si_game_over:
             return
+
+        # 1. Handle Ship Movements without wiping out the existing active laser coordinate
         if action == "LEFT" and st.session_state.player_x > 0:
             st.session_state.player_x -= 1
         elif action == "RIGHT" and st.session_state.player_x < 9:
             st.session_state.player_x += 1
-        elif action == "FIRE":
-            laser_x = st.session_state.player_x
-            laser_y = 9
-            while laser_y > 0:
-                laser_y -= 1
-                if (laser_x, laser_y) in st.session_state.invaders:
-                    st.session_state.invaders.remove((laser_x, laser_y))
-                    st.session_state.si_score += 10
-                    break
-                grid_placeholder.text(draw_and_render_grid(laser_pos=(laser_x, laser_y)))
-                score_placeholder.write(f"🏆 Score: **{st.session_state.si_score}**")
-                time.sleep(0.5)
 
+        # 2. Handle Snappy, Fast Laser Fire Animation Loop
+        elif action == "FIRE":
+            # Only fire if there isn't a laser already clearing empty space on screen
+            if st.session_state.active_laser is None:
+                lx = st.session_state.player_x
+                ly = 9
+                
+                while ly > 0:
+                    ly -= 1
+                    st.session_state.active_laser = (lx, ly)
+                    
+                    # Real-time impact detection
+                    if (lx, ly) in st.session_state.invaders:
+                        st.session_state.invaders.remove((lx, ly))
+                        st.session_state.si_score += 10
+                        st.session_state.active_laser = None
+                        break
+                        
+                    # Update graphics frame layout rapidly with 0.08s speed step
+                    grid_placeholder.text(draw_and_render_grid())
+                    score_placeholder.write(f"🏆 Score: **{st.session_state.si_score}**")
+                    time.sleep(0.08)
+                
+                # Clear laser reference path once it harmlessly exits the top ceiling grid row
+                st.session_state.active_laser = None
+
+        # 3. Handle Alien Fleet Descent step pacing logic
         if random.random() < 0.35 and len(st.session_state.invaders) > 0:
             new_invaders = []
             for ix, iy in st.session_state.invaders:
@@ -223,12 +242,15 @@ elif app_mode == "👾 Space Invaders":
                 new_invaders.append((ix, iy + 1))
             st.session_state.invaders = new_invaders
 
+        # Tougher Wave Respawn Condition Check
         if len(st.session_state.invaders) == 0:
             st.session_state.invaders = [(1, 1), (3, 1), (5, 1), (7, 1), (2, 2), (4, 2), (6, 2)]
 
-        grid_placeholder.text(draw_and_render_grid())
-        score_placeholder.write(f"🏆 Score: **{st.session_state.si_score}**")
+    # Final visual refresh step
+    grid_placeholder.text(draw_and_render_grid())
+    score_placeholder.write(f"🏆 Score: **{st.session_state.si_score}**")
 
+    # Controller UI Panel 
     if st.session_state.si_game_over:
         st.error("Your ship was overrun!")
         if st.button("Respawn Fleet"):
@@ -238,12 +260,13 @@ elif app_mode == "👾 Space Invaders":
         col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("◀️ Move Left"):
-                run_si_turn("LEFT"); st.rerun()
+                run_si_turn("LEFT")
+                st.rerun()
         with col2:
             if st.button("🔥 Fire Laser"):
-                run_si_turn("FIRE"); st.rerun()
+                run_si_turn("FIRE")
+                st.rerun()
         with col3:
             if st.button("Move Right ▶️"):
-                run_si_turn("RIGHT"); st.rerun()
-
-
+                run_si_turn("RIGHT")
+                st.rerun()
