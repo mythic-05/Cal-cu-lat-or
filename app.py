@@ -271,10 +271,6 @@ elif app_mode == "👾 Space Invaders":
                 st.rerun()
 
            
-import streamlit as None
-import time
-import random
-
 # -------------------------------------------------------------
 # PAGE 4: PLAYABLE TETRIS 
 # -------------------------------------------------------------
