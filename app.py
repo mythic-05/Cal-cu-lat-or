@@ -76,16 +76,32 @@ elif app_mode == "Calculator":
     if st.button("Compute Result", key="pro_btn"):
         st.write("---")
         if operation == "Addition (+)":
-            st.success(f"Result: {val1 + val2}")
+            if (val1 == 9 and val2 == 10) or (val1 == 10 and val2 == 9):
+                st.success("🗣️ 21 YOU STUPID")
+            elif val1 == 67 and val2 == 67:
+                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly. Its traveling to you there because the missle knows where it is by knowing where it isn't")
+            else:
+                st.success(f"Result: {val1 + val2}")
         elif operation == "Subtraction (-)":
-            st.success(f"Result: {val1 - val2}")
+            if val1 == 67 and val2 == 67:
+                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly. Its traveling to you there because the missle knows where it is by knowing where it isn't")
+            else:
+                st.success(f"Result: {val1 - val2}")
         elif operation == "Multiplication (×)":
-            st.success(f"Result: {val1 * val2}")
+            if val1 == 67 and val2 == 67:
+                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly. Its traveling to you there because the missle knows where it is by knowing where it isn't")
+            else:
+                st.success(f"Result: {val1 * val2}")
         elif operation == "Power (x^y)":
-            st.success(f"Result: {val1 ** val2}")
+            if val1 == 67 and val2 == 67:
+                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly. Its traveling to you there because the missle knows where it is by knowing where it isn't")
+            else:
+                st.success(f"Result: {val1 ** val2}")
         elif operation == "Remainder (%)":
             if val2 == 0:
                 st.error("Error: Cannot calculate remainder with a divisor of zero.")
+            elif val1 == 67 and val2 == 67:
+                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly. Its traveling to you there because the missle knows where it is by knowing where it isn't")
             else:
                 st.success(f"Result: {val1 % val2}")
         elif operation == "Absolute Value |x|":
@@ -110,9 +126,10 @@ elif app_mode == "Calculator":
                 # Generate a huge wall grid of fire and smoke emoji blocks
                 blast_grid = " ".join(["💥" if i % 2 == 0 else "🔥" for i in range(120)])
                 st.text(blast_grid)
+            elif val1 == 67 and val2 == 67:
+                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly. Its traveling to you there because the missle knows where it is by knowing where it isn't")
             else:
                 st.success(f"Result: {val1 / val2}")
-
 
 
 # -------------------------------------------------------------
@@ -143,7 +160,7 @@ elif app_mode == "🐍 Snake":
         if st.session_state.game_over:
             return
             
-        head_x, head_y = st.session_state.snake[0]
+        head_x, head_y = st.session_state.snake
         if next_dir == "UP": head_y -= 1
         elif next_dir == "DOWN": head_y += 1
         elif next_dir == "LEFT": head_x -= 1
@@ -216,16 +233,14 @@ elif app_mode == "🐍 Snake":
                 move_snake("LEFT")
                 st.rerun()
         with col5:
-            st.write("🕹️ D-Pad")
+            st.write("D-Pad")
         with col6:
             if st.button("▶️ Right"):
                 move_snake("RIGHT")
                 st.rerun()
-                
-        # Row 3: Down Button
-        col7, col8, col9 = st.columns(3)
-        with col8:
-            if st.button("🔽 Down"):
-                move_snake("DOWN")
-                st.rerun()
-
+#Row 3: Down Buttonc
+                ol7, col8, col9 = st.columns(3)
+                with col8:
+                if st.button("🔽 Down"):
+                 move_snake("DOWN")
+                 st.rerun()
