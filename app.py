@@ -186,27 +186,29 @@ elif app_mode == "🐍 Snake":
     else:
         # Visual Arcade Controller Interface
         st.write("--- Controls ---")
+        
+        # Row 1: Up Button
         col1, col2, col3 = st.columns(3)
         with col2:
             if st.button("🔼 Up"):
                 move_snake("UP")
                 st.rerun()
         
+        # Row 2: Left, D-Pad, Right Buttons
         col4, col5, col6 = st.columns(3)
         with col4:
             if st.button("◀️ Left"):
                 move_snake("LEFT")
                 st.rerun()
-        with col5:
-            st.write("🕹️ D-Pad")
         with col6:
             if st.button("▶️ Right"):
                 move_snake("RIGHT")
                 st.rerun()
                 
-            col7, col8, col9 = st.columns(3)
+        # Row 3: Down Button (Now properly un-indented outside of col6!)
+        col7, col8, col9 = st.columns(3)
         with col8:
             if st.button("🔽 Down"):
                 move_snake("DOWN")
-                st.rerun()
+                st.rerun() 
 
