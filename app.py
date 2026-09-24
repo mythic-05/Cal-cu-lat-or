@@ -416,6 +416,6 @@ elif app_mode == "🕹️Tetris":
                     st.rerun()
 
         # 3. Synchronized Continuous Fall Timer execution cycle step
-        time.sleep(0.150)
+        time.sleep(0.300)
         run_tetris_step("DROP")
         st.rerun()
