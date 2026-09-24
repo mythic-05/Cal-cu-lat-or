@@ -116,13 +116,13 @@ elif app_mode == "Calculator":
 
 
 # -------------------------------------------------------------
-# PAGE 3: PLAYABLE SNAKE GAME
+# PAGE 3: PLAYABLE SNAKE GAME 
 # -------------------------------------------------------------
 elif app_mode == "🐍 Snake":
-    st.title("🐍 Web Arcade: Snake")
-    st.caption("A simple browser-based grid controller version of Snake built specifically for Streamlit dashboards.")
+    st.title("🐍 Snake")
+    st.caption("Press a direction button below to steer. The snake crawls forward automatically!")
 
-    # Initialize persistent state variables for game coordinates
+    # Initialize session state variables
     if 'snake' not in st.session_state:
         st.session_state.snake = [(5, 5), (5, 6), (5, 7)]
         st.session_state.food = (2, 2)
@@ -130,7 +130,6 @@ elif app_mode == "🐍 Snake":
         st.session_state.score = 0
         st.session_state.game_over = False
 
-    # Reset game logic function
     def reset_game():
         st.session_state.snake = [(5, 5), (5, 6), (5, 7)]
         st.session_state.food = (3, 3)
@@ -138,64 +137,72 @@ elif app_mode == "🐍 Snake":
         st.session_state.score = 0
         st.session_state.game_over = False
 
-    # Simple text-based graphic renderer
-    GRID_SIZE = 10
-    grid = [["⬜" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+    # 1. Create a specialized game loop fragment that refreshes on its own
+    @st.fragment(run_every=0.4)  # Lower number = faster game speed
+    def game_loop():
+        if not st.session_state.game_over:
+            # Game Physics Engine - Step forward in current direction automatically
+            head_x, head_y = st.session_state.snake[0]
+            if st.session_state.direction == "UP": head_y -= 1
+            elif st.session_state.direction == "DOWN": head_y += 1
+            elif st.session_state.direction == "LEFT": head_x -= 1
+            elif st.session_state.direction == "RIGHT": head_x += 1
 
-    # Draw elements onto grid coordinates
-    if not st.session_state.game_over:
-        fx, fy = st.session_state.food
-        grid[fy][fx] = "🍎"
-        for i, (sx, sy) in enumerate(st.session_state.snake):
-            grid[sy][sx] = "🟩" if i > 0 else "🐲"
+            new_head = (head_x, head_y)
+            GRID_SIZE = 10
 
-    # Display the screen grid
-    grid_string = "\n".join([" ".join(row) for row in grid])
-    st.text(grid_string)
-    st.write(f"🏆 Current Score: **{st.session_state.score}**")
-
-    if st.session_state.game_over:
-        st.error("Maybe don't spam?")
-        if st.button("Play Again"):
-            reset_game()
-            st.rerun()
-    else:
-        # Arcade D-Pad interface inputs
-        st.write("--- Controls ---")
-        col1, col2, col3 = st.columns(3)
-        with col2:
-            if st.button("🔼 Up"): st.session_state.direction = "UP"
-        
-        col4, col5, col6 = st.columns(3)
-        with col4:
-            if st.button("◀️ Left"): st.session_state.direction = "LEFT"
-        with col5:
-            if st.button("⚙️ Move"):
-                # Physics Frame Loop step
-                head_x, head_y = st.session_state.snake[0]
-                if st.session_state.direction == "UP": head_y -= 1
-                elif st.session_state.direction == "DOWN": head_y += 1
-                elif st.session_state.direction == "LEFT": head_x -= 1
-                elif st.session_state.direction == "RIGHT": head_x += 1 
-
-                new_head = (head_x, head_y)
-
-                # Collision detection boundary check
-                if head_x < 0 or head_x >= GRID_SIZE or head_y < 0 or head_y >= GRID_SIZE or new_head in st.session_state.snake:
-                    st.session_state.game_over = True
+            # Wall and self-collision checker
+            if (head_x < 0 or head_x >= GRID_SIZE or 
+                head_y < 0 or head_y >= GRID_SIZE or 
+                new_head in st.session_state.snake):
+                st.session_state.game_over = True
+            else:
+                st.session_state.snake.insert(0, new_head)
+                if new_head == st.session_state.food:
+                    st.session_state.score += 1
+                    import random
+                    st.session_state.food = (random.randint(0, GRID_SIZE-1), random.randint(0, GRID_SIZE-1))
                 else:
-                    st.session_state.snake.insert(0, new_head)
-                    if new_head == st.session_state.food:
-                        st.session_state.score += 1
-                        # Relocate fruit coordinate dynamically
-                        import random
-                        st.session_state.food = (random.randint(0, GRID_SIZE-1), random.randint(0, GRID_SIZE-1))
-                    else:
-                        st.session_state.snake.pop()
-                st.rerun()
-        with col6:
-            if st.button("▶️ Right"): st.session_state.direction = "RIGHT"
+                    st.session_state.snake.pop()
+
+        # Render the text-based game monitor screen grid
+        GRID_SIZE = 10
+        grid = [["⬜" for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+        
+        if not st.session_state.game_over:
+            fx, fy = st.session_state.food
+            grid[fy][fx] = "🍎"
+            for i, (sx, sy) in enumerate(st.session_state.snake):
+                grid[sy][sx] = "🟩" if i > 0 else "🐲"
+
+        grid_string = "\n".join([" ".join(row) for row in grid])
+        st.text(grid_string)
+        st.write(f"🏆 Current Score: **{st.session_state.score}**")
+
+        if st.session_state.game_over:
+            st.error("Maybe don't spam?")
+            if st.button("Play Again"):
+                reset_game()
+                st.rendering_context_rerun = True  # Trigger a direct layout reset
+        else:
+            # Visual Arcade Controller Interface
+            st.write("--- Controls ---")
+            col1, col2, col3 = st.columns(3)
+            with col2:
+                if st.button("🔼 Up"): st.session_state.direction = "UP"
             
-        col7, col8, col9 = st.columns(3)
-        with col8:
-            if st.button("🔽 Down"): st.session_state.direction = "DOWN"
+            col4, col5, col6 = st.columns(3)
+            with col4:
+                if st.button("◀️ Left"): st.session_state.direction = "LEFT"
+            with col5:
+                st.write(f"🧭 {st.session_state.direction}") # Replaced old manual button with current status tracker
+            with col6:
+                if st.button("▶️ Right"): st.session_state.direction = "RIGHT"
+                
+            col7, col8, col9 = st.columns(3)
+            with col8:
+                if st.button("🔽 Down"): st.session_state.direction = "DOWN"
+
+    # Call the looping game fragment onto the page structure
+    game_loop()
+
