@@ -274,8 +274,8 @@ elif app_mode == "👾 Space Invaders":
 # -------------------------------------------------------------
 # PAGE 4: PLAYABLE TETRIS (TURN-BASED ENGINE)
 # -------------------------------------------------------------
-elif app_mode == "🧱 Tetris":
-    st.title("🧱 Tetris")
+elif app_mode == "🕹️Tetris":
+    st.title("🕹️Tetris")
     st.caption("Align horizontal rows using the arcade controls below to clear blocks!")
 
     T_ROWS, T_COLS = 12, 8
