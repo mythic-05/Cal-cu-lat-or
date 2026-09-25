@@ -468,7 +468,7 @@ elif app_mode == "🍕 Pac-Man":
     })
 
     # Fixed 9x9 Maze Layout Grid (1 = Wall, 0 = Open Path with Dot)
-    PAC_MAZE = [,
+    PAC_MAZE = [
  ,
  ,
  ,
