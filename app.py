@@ -173,8 +173,7 @@ elif app_mode == "🐍 Snake":
         for i, (sx, sy) in enumerate(st.session_state.snake):
             grid[sy][sx] = "🟩" if i > 0 else "🐲"
 
-    st.text("
-".join([" ".join(row) for row in grid]))
+    st.text("\n".join([" ".join(row) for row in grid]))
     st.write(f"🏆 Current Score: **{st.session_state.score}**")
 
     snake_controls = st.container()
@@ -235,8 +234,7 @@ elif app_mode == "👾 Space Invaders":
                 lx, ly = st.session_state.active_laser
                 si_grid[ly][lx] = "⚡"
             si_grid[9][st.session_state.player_x] = "🚀"
-        return "
-".join([" ".join(row) for row in si_grid])
+        return "\n".join([" ".join(row) for row in si_grid])
 
     grid_placeholder = st.empty()
     score_placeholder = st.empty()
@@ -429,8 +427,7 @@ elif app_mode == "🕹️Tetris":
                     if 0 <= y_pos < T_ROWS and 0 <= x_pos < T_COLS:
                         display_board[y_pos][x_pos] = p["color"]
 
-        grid_string = "
-".join([" ".join(row) for row in display_board])
+        grid_string = "\n".join([" ".join(row) for row in display_board])
         grid_placeholder.text(grid_string)
         score_placeholder.write(f"🏆 Score: **{st.session_state.t_score}**")
 
@@ -466,14 +463,13 @@ elif app_mode == "🦖 T-Rex Run":
         " ": "Jump", "ArrowUp": "Jump", "w": "Jump", "W": "Jump"
     })
 
-    # Lane Configuration Constants
     ROAD_WIDTH = 16
     ROAD_HEIGHT = 4
 
     if 'dino_y' not in st.session_state:
-        st.session_state.dino_y = 0  # 0 = Grounded level, 1 = Jump peak height
+        st.session_state.dino_y = 0  
         st.session_state.dino_air_time = 0
-        st.session_state.obstacles = [8, 14]  # X positions of cacti
+        st.session_state.obstacles = [8, 14]
         st.session_state.dino_score = 0
         st.session_state.dino_game_over = False
 
@@ -488,40 +484,31 @@ elif app_mode == "🦖 T-Rex Run":
         if st.session_state.dino_game_over:
             return
 
-        # Handle explicit programmatic Jump trigger mechanism
         if action == "JUMP" and st.session_state.dino_y == 0:
             st.session_state.dino_y = 1
-            st.session_state.dino_air_time = 2  # Stays up for 2 frames
+            st.session_state.dino_air_time = 2  
 
-        # Advance game engine score metrics
         st.session_state.dino_score += 1
 
-        # Process obstacle animation scroll translations leftward
         new_obstacles = []
         for obs_x in st.session_state.obstacles:
             next_x = obs_x - 1
             if next_x < 0:
-                # Recycle obstacle right past screen visibility boundary edge
                 next_x = ROAD_WIDTH - 1 + random.randint(1, 4)
-            
-            # Prevent stacking overlap glitches
             if next_x not in new_obstacles:
                 new_obstacles.append(next_x)
         
         st.session_state.obstacles = sorted(new_obstacles)
 
-        # Process jump hang-time state machine mechanics
         if st.session_state.dino_y == 1:
             st.session_state.dino_air_time -= 1
             if st.session_state.dino_air_time <= 0:
                 st.session_state.dino_y = 0
 
-        # Collision detection calculation checks (Dino is at static columns 1-2)
         for obs_x in st.session_state.obstacles:
             if (obs_x == 2 or obs_x == 1) and st.session_state.dino_y == 0:
                 st.session_state.dino_game_over = True
 
-    # Render Graphics Composition Frames Layer Arrays
     grid_placeholder = st.empty()
     score_placeholder = st.empty()
     controls_placeholder = st.empty()
@@ -535,23 +522,17 @@ elif app_mode == "🦖 T-Rex Run":
                 reset_dino()
                 st.rerun()
     else:
-        # Construct empty atmospheric camera frames canvas matrix maps
         scene_canvas = [["☁️" if random.random() < 0.05 else "⬜" for _ in range(ROAD_WIDTH)] for _ in range(ROAD_HEIGHT)]
-        
-        # Overlay ground environment terrain layer row
         scene_canvas[3] = ["🟫"] * ROAD_WIDTH
 
-        # Draw active obstacle cacti entities
         for obs_x in st.session_state.obstacles:
             if 0 <= obs_x < ROAD_WIDTH:
                 scene_canvas[2][obs_x] = "🌵"
 
-        # Map dynamic Dino position states contextually
         dino_row = 2 if st.session_state.dino_y == 0 else 1
         scene_canvas[dino_row][2] = "🦖"
 
-        grid_placeholder.text("
-".join([" ".join(row) for row in scene_canvas]))
+        grid_placeholder.text("\n".join([" ".join(row) for row in scene_canvas]))
         score_placeholder.write(f"🏆 Score: **{st.session_state.dino_score}**")
 
         with controls_placeholder:
@@ -559,7 +540,6 @@ elif app_mode == "🦖 T-Rex Run":
                 run_dino_step("JUMP")
                 st.rerun()
 
-        # Frame loop timer ticking speed pacing increments
         time.sleep(0.180)
         run_dino_step("TICK")
         st.rerun()
