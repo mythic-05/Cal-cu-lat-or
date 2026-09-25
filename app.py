@@ -1,12 +1,10 @@
 import streamlit as st
 import time
-import random
 import streamlit.components.v1 as components
 
 # --- APP CONFIGURATION & NAVIGATION ---
 st.set_page_config(page_title="Web Arcade", layout="centered")
 
-# Sidebar navigation menu
 st.sidebar.title(" Applications ")
 app_mode = st.sidebar.radio(
     "Choose a tool to load:",
@@ -66,7 +64,7 @@ if app_mode == "🔢 Calculator":
                 st.success(f"Result: {val1 / val2}")
 
 # -------------------------------------------------------------
-# BROWSER-NATIVE GAME ENGINE LOADER (Zero-Delay JavaScript)
+# BROWSER-NATIVE GAME INTERFACES (Zero-Delay JavaScript)
 # -------------------------------------------------------------
 else:
     games = {
@@ -89,7 +87,8 @@ else:
                     alert('Game Over! Score: ' + score);
                     resetGame();
                 }
-                setTimeout(function() { clear(); drawFood(); move(); drawSnake(); main(); }, 90);
+                // FIXED: Increased timeout from 90 to 150 to make the snake noticeably slower
+                setTimeout(function() { clear(); drawFood(); move(); drawSnake(); main(); }, 150);
             }
             function resetGame() {
                 snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
@@ -136,7 +135,10 @@ else:
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
             let player = {x: 180, y: 360, w: 30, h: 20}, lasers = [], invaders = [], score = 0;
-            
+            let lastShotTime = 0; // FIXED: For shooting delay rate-limiting
+            let invaderDirection = 1; // 1 = right, -1 = left
+            let invaderMoveCounter = 0;
+
             function initInvaders() {
                 invaders = [];
                 for(let i=0; i<6; i++) for(let j=0; j<3; j++) invaders.push({x: 40+i*50, y: 30+j*30, w:25, h:20});
@@ -148,6 +150,29 @@ else:
                 ctx.fillStyle='blue'; ctx.fillRect(player.x, player.y, player.w, player.h);
                 ctx.fillStyle='red'; invaders.forEach(inv => ctx.fillRect(inv.x, inv.y, inv.w, inv.h));
                 ctx.fillStyle='yellow'; 
+                
+                // FIXED: Make fleet dynamically step sideways and march down closer over time
+                invaderMoveCounter++;
+                if (invaderMoveCounter % 40 === 0) {
+                    let shiftDown = false;
+                    invaders.forEach(inv => {
+                        inv.x += invaderDirection * 10;
+                        if (inv.x > 360 || inv.x < 10) { shiftDown = true; }
+                    });
+                    if (shiftDown) {
+                        invaderDirection *= -1;
+                        invaders.forEach(inv => { inv.y += 15; });
+                    }
+                }
+
+                // Game Over if invaders breach defense perimeter
+                invaders.forEach(inv => {
+                    if (inv.y + inv.h >= player.y) {
+                        alert('Game Over! Your base was overrun.');
+                        initInvaders();
+                        score = 0;
+                    }
+                });
                 
                 lasers.forEach((l,li) => { 
                     l.y-=7; 
@@ -175,7 +200,14 @@ else:
             window.addEventListener('keydown', e => {
                 if((e.key==='ArrowLeft' || e.key==='a' || e.key==='A') && player.x>0) player.x-=20;
                 if((e.key==='ArrowRight' || e.key==='d' || e.key==='D') && player.x<370) player.x+=20;
-                if(e.key===' ') lasers.push({x: player.x+13, y: player.y});
+                if(e.key===' ') {
+                    let now = Date.now();
+                    // FIXED: Enforce a 400ms weapons-cooldown shooting delay
+                    if (now - lastShotTime > 400) {
+                        lasers.push({x: player.x+13, y: player.y});
+                        lastShotTime = now;
+                    }
+                }
             });
             loop();
             </script>
@@ -192,17 +224,31 @@ else:
             ctx.scale(20, 20);
             
             const arena = Array(20).fill().map(() => Array(12).fill(0));
-            const player = { pos: {x: 4, y: 0}, matrix: [[0,1,0],[1,1,1],[0,0,0]] };
+            
+            // Standard tetromino blocks
+            const SHAPES = [
+                [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], // I
+                [[2,2],[2,2]], // O
+                [[0,3,0],[3,3,3],[0,0,0]], // T
+                [[4,0,0],[4,4,4],[0,0,0]]  // L
+            ];
+
+            function createPiece() {
+                const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+                return { pos: {x: 4, y: 0}, matrix: shape };
+            }
+
+            let player = createPiece();
             let score = 0;
 
             function draw() { 
                 ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); 
-                drawMatrix(arena, {x:0, y:0}); 
-                drawMatrix(player.matrix, player.pos); 
+                drawMatrix(arena, {x:0, y:0}, 'cyan'); 
+                drawMatrix(player.matrix, player.pos, 'red'); 
             }
-            function drawMatrix(m, o) { 
+            function drawMatrix(m, o, color) { 
                 m.forEach((row, y) => row.forEach((val, x) => { 
-                    if(val) { ctx.fillStyle='cyan'; ctx.fillRect(x + o.x, y + o.y, 1, 1); } 
+                    if(val !== 0) { ctx.fillStyle=color; ctx.fillRect(x + o.x, y + o.y, 1, 1); } 
                 })); 
             }
             function merge(arena, player) {
@@ -216,21 +262,40 @@ else:
                 const [m, o] = [player.matrix, player.pos];
                 for (let y = 0; y < m.length; ++y) {
                     for (let x = 0; x < m[y].length; ++x) {
-                        if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) { return true; }
+                        if (m[y][x] !== 0 && (arena[y + o.y] === undefined || arena[y + o.y][x + o.x] === undefined || arena[y + o.y][x + o.x] !== 0)) { return true; }
                     }
                 }
                 return false;
             }
+            
+            // FIXED: Clear rows properly instead of resetting whole board back to top when a single block hits floor!
+            function arenaSweep() {
+                let rowCount = 1;
+                outer: for (let y = arena.length - 1; y > 0; --y) {
+                    for (let x = 0; x < arena[y].length; ++x) {
+                        if (arena[y][x] === 0) { continue outer; }
+                    }
+                    const row = arena.splice(y, 1)[0].fill(0);
+                    arena.unshift(row);
+                    ++y;
+                    score += rowCount * 100;
+                    document.getElementById('score').innerText = 'Score: ' + score;
+                }
+            }
+
             function playerDrop() {
                 player.pos.y++;
                 if (collide(arena, player)) {
                     player.pos.y--;
                     merge(arena, player);
-                    player.pos.y = 0;
-                    player.pos.x = 4;
-                    arena.forEach(row => row.fill(0));
-                    score = 0;
-                    document.getElementById('score').innerText = 'Score: ' + score;
+                    arenaSweep(); // Check for completed lines
+                    player = createPiece(); // Spawn new piece at top
+                    if (collide(arena, player)) {
+                        // Real game over clear
+                        arena.forEach(row => row.fill(0));
+                        score = 0;
+                        document.getElementById('score').innerText = 'Score: ' + score;
+                    }
                 }
                 dropCounter = 0;
             }
@@ -241,7 +306,8 @@ else:
                 const deltaTime = time - lastTime;
                 lastTime = time;
                 dropCounter += deltaTime; 
-                if(dropCounter > 1000) { playerDrop(); } 
+                // FIXED: Adjusted threshold counter drop speed from 1000ms down to 400ms for faster drops
+                if(dropCounter > 400) { playerDrop(); } 
                 draw(); 
                 requestAnimationFrame(update); 
             }
@@ -262,6 +328,7 @@ else:
             <canvas id="game" width="600" height="150"></canvas>
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+            // FIXED: Toned down velocity gravity jump heights so the dino isn't soaring off-screen
             let dino = {y: 130, vy: 0, isJumping: false}, obstacles = [{x: 600}], score = 0;
             
             function loop() {
@@ -270,22 +337,29 @@ else:
                 document.getElementById('score').innerText = 'Score: ' + score;
                 
                 if(dino.isJumping) { 
-                    dino.vy += 0.6; 
+                    dino.vy += 0.7; // Increased gravity drop down speed
                     dino.y += dino.vy; 
                     if(dino.y >= 130) { dino.y = 130; dino.isJumping = false; } 
                 }
                 
-                ctx.fillStyle='#333'; 
-                ctx.fillRect(50, dino.y-20, 20, 20); 
+                // FIXED: Render actual geometric visual elements for a simple green T-Rex dinosaur layout profile instead of a flat generic cube structure box
+                ctx.fillStyle='green';
+                ctx.fillRect(50, dino.y - 25, 20, 25); // Body
+                ctx.fillRect(60, dino.y - 33, 14, 12); // Head snout layout
+                ctx.fillStyle='black';
+                ctx.fillRect(63, dino.y - 30, 2, 2);   // Eye tracking pixel
+                ctx.fillStyle='green';
+                ctx.fillRect(46, dino.y - 12, 5, 8);   // Back leg extension
+                ctx.fillRect(56, dino.y - 12, 5, 8);   // Front leg extension
                 
                 obstacles.forEach((o, i) => { 
                     o.x -= 6; 
-                    ctx.fillStyle='green';
-                    ctx.fillRect(o.x, 110, 15, 40); 
+                    ctx.fillStyle='brown';
+                    ctx.fillRect(o.x, 115, 12, 35); // Cactus obstacle structure
                     if(o.x < -15) o.x = 600 + Math.random()*300; 
                     
-                    if(o.x > 30 && o.x < 70 && dino.y >= 110) { 
-                        alert('Game Over! Restarting...'); 
+                    if(o.x > 35 && o.x < 70 && dino.y >= 115) { 
+                        alert('Game Over! Your high score was: ' + score); 
                         score = 0; 
                         o.x = 600; 
                     }
@@ -293,8 +367,9 @@ else:
                 requestAnimationFrame(loop);
             }
             window.addEventListener('keydown', e => { 
+                // FIXED: Adjusted standard lift jump vector from -12 down to -8.5 for normal trajectory arcs
                 if((e.key===' ' || e.key==='ArrowUp' || e.key==='w' || e.key==='W') && !dino.isJumping) { 
-                    dino.vy = -12; 
+                    dino.vy = -8.5; 
                     dino.isJumping = true; 
                 } 
             });
@@ -303,5 +378,8 @@ else:
         """
     }
 
+    # Normalize name keys to bypass string layout space mismatch options
+    cleaned_mode = app_mode.replace("🕹️Tetris", "🕹️Tetris").strip()
+    
     st.title(app_mode)
-    components.html(games[app_mode], height=520)
+    components.html(games[cleaned_mode], height=520)
