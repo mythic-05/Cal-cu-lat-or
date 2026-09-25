@@ -450,3 +450,188 @@ else:
     cleaned_mode = app_mode.replace("🕹️Tetris", "🕹️Tetris").strip()
     st.title(app_mode)
     components.html(games[cleaned_mode], height=560)
+            "🍕 Pac-Man": """
+            <style>
+                canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; } 
+                h1, p { color: white; text-align: center; font-family: sans-serif; }
+                .status-container { text-align: center; margin-top: 15px; }
+                .status-box { display: inline-block; background-color: #2b2b2b; color: #ffff00; font-family: sans-serif; font-size: 1.1rem; padding: 10px 20px; border-radius: .5rem; border: 1px solid #ffff00; font-weight: bold; }
+            </style>
+            <h1>🍕 Pac-Man Arcade</h1><p id='score'>Score: 0</p>
+            <canvas id="game" width="380" height="380"></canvas>
+            <div class="status-container"><div id="status" class="status-box">🟢 Game Status: Active</div></div>
+            <script>
+            const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+            const tileSize = 20;
+            let score = 0, gameRunning = true;
+
+            let map = [,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+ ,
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+            ];
+
+            let pacman = { x: 9, y: 15, dx: 0, dy: 0, nextDx: 0, nextDy: 0 };
+            let ghosts = [
+                { x: 9, y: 8, dx: 1, dy: 0, color: 'red' },
+                { x: 8, y: 10, dx: -1, dy: 0, color: 'pink' },
+                { x: 10, y: 10, dx: 1, dy: 0, color: 'cyan' }
+            ];
+
+            function isWall(gridX, gridY) {
+                if (gridX < 0 || gridX >= 19 || gridY < 0 || gridY >= 19) return false;
+                return map[gridY][gridX] === 1;
+            }
+
+            function draw() {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                for (let r = 0; r < 19; r++) {
+                    for (let c = 0; c < 19; c++) {
+                        if (map[r][c] === 1) {
+                            ctx.fillStyle = '#1111b3';
+                            ctx.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
+                        } else if (map[r][c] === 0) {
+                            ctx.fillStyle = '#ffb8ae';
+                            ctx.beginPath();
+                            ctx.arc(c * tileSize + tileSize/2, r * tileSize + tileSize/2, 3, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                }
+
+                // Render Pacman as a yellow emoji circle with an open mouth orientation angle
+                let centerX = pacman.x * tileSize + tileSize / 2;
+                let centerY = pacman.y * tileSize + tileSize / 2;
+                let radius = tileSize / 2 - 1;
+
+                let startAngle = 0.2;
+                let endAngle = 1.8;
+
+                if (pacman.dx === 1) { startAngle = 0.2; endAngle = 1.8; }
+                else if (pacman.dx === -1) { startAngle = 1.2; endAngle = 0.8; }
+                else if (pacman.dy === 1) { startAngle = 0.7; endAngle = 0.3; }
+                else if (pacman.dy === -1) { startAngle = 1.7; endAngle = 1.3; }
+
+                ctx.fillStyle = '#ffff00';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, startAngle * Math.PI, endAngle * Math.PI);
+                ctx.lineTo(centerX, centerY);
+                ctx.closePath();
+                ctx.fill();
+
+                ghosts.forEach(g => {
+                    ctx.fillStyle = g.color;
+                    ctx.fillRect(g.x * tileSize + 2, g.y * tileSize + 2, tileSize - 4, tileSize - 4);
+                });
+            }
+
+            function update() {
+                if (!gameRunning) return;
+
+                if (pacman.nextDx !== 0 || pacman.nextDy !== 0) {
+                    if (!isWall(pacman.x + pacman.nextDx, pacman.y + pacman.nextDy)) {
+                        pacman.dx = pacman.nextDx;
+                        pacman.dy = pacman.nextDy;
+                    }
+                }
+
+                if (!isWall(pacman.x + pacman.dx, pacman.y + pacman.dy)) {
+                    pacman.x += pacman.dx;
+                    pacman.y += pacman.dy;
+                    if (pacman.x < 0) pacman.x = 18;
+                    if (pacman.x > 18) pacman.x = 0;
+                }
+
+                if (map[pacman.y][pacman.x] === 0) {
+                    map[pacman.y][pacman.x] = 2;
+                    score += 10;
+                    document.getElementById('score').innerText = 'Score: ' + score;
+                }
+
+                ghosts.forEach(g => {
+                    let options = [];
+                    let dirs = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
+                    dirs.forEach(d => {
+                        if (!isWall(g.x + d.x, g.y + d.y) && !(d.x === -g.dx && d.y === -g.dy)) {
+                            options.push(d);
+                        }
+                    });
+                    if (options.length === 0) {
+                        g.dx = -g.dx; g.dy = -g.dy;
+                    } else {
+                        let choice = options[Math.floor(Math.random() * options.length)];
+                        g.dx = choice.x; g.dy = choice.y;
+                    }
+
+                    if (!isWall(g.x + g.dx, g.y + g.dy)) {
+                        g.x += g.dx;
+                        g.y += g.dy;
+                        if (g.x < 0) g.x = 18;
+                        if (g.x > 18) g.x = 0;
+                    }
+
+                    if (g.x === pacman.x && g.y === pacman.y) {
+                        gameRunning = false;
+                        document.getElementById('status').innerText = '💥 Game Over! Caught by ghosts. Restarting...';
+                        setTimeout(resetPacman, 2500);
+                    }
+                });
+
+                draw();
+                setTimeout(update, 220);
+            }
+
+            function resetPacman() {
+                score = 0;
+                document.getElementById('score').innerText = 'Score: ' + score;
+                document.getElementById('status').innerText = '🟢 Game Status: Active';
+                pacman = { x: 9, y: 15, dx: 0, dy: 0, nextDx: 0, nextDy: 0 };
+                ghosts = [
+                    { x: 9, y: 8, dx: 1, dy: 0, color: 'red' },
+                    { x: 8, y: 10, dx: -1, dy: 0, color: 'pink' },
+                    { x: 10, y: 10, dx: 1, dy: 0, color: 'cyan' }
+                ];
+                for (let r = 0; r < 19; r++) {
+                    for (let c = 0; c < 19; c++) {
+                        if (map[r][c] === 2 && (r !== 15 || c !== 9)) {
+                            map[r][c] = 0;
+                        }
+                    }
+                }
+                gameRunning = true;
+                draw();
+            }
+
+            window.addEventListener('keydown', e => {
+                const key = e.key.toLowerCase();
+                if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 's', 'a', 'd'].includes(key)) {
+                    e.preventDefault();
+                }
+                if (key === 'arrowup' || key === 'w') { pacman.nextDx = 0; pacman.nextDy = -1; }
+                if (key === 'arrowdown' || key === 's') { pacman.nextDx = 0; pacman.nextDy = 1; }
+                if (key === 'arrowleft' || key === 'a') { pacman.nextDx = -1; pacman.nextDy = 0; }
+                if (key === 'arrowright' || key === 'd') { pacman.nextDx = 1; pacman.nextDy = 0; }
+            });
+
+            draw();
+            update();
+            </script>
+        """
+
