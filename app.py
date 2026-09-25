@@ -64,123 +64,149 @@ if app_mode == "🔢 Calculator":
             else:
                 st.success(f"Result: {val1 / val2}")
 
-# -------------------------------------------------------------
-# BROWSER-NATIVE GAME ENGINE LOADER (Zero-Delay JavaScript Canvas)
-# -------------------------------------------------------------
-else:
-    games = {
-        "🐍 Snake": """
-            <style>
-                body { margin: 0; background: #000; font-family: sans-serif; color: white; text-align: center; }
-                .game-container { position: relative; width: 400px; margin: auto; }
-                canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; } 
-                h1, p { margin: 10px 0; }
-                .overlay {
-                    display: none; position: absolute; top: 50px; left: 4px; width: 400px; height: 400px;
-                    background: rgba(0, 0, 0, 0.85); color: #ff4b4b; flex-direction: column;
-                    justify-content: center; align-items: center; font-size: 2rem; font-weight: bold;
-                }
-                .trash-talk { font-size: 1.1rem; color: #aaa; margin-top: 10px; font-style: italic; padding: 0 20px; }
-                .mobile-controls { display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(3, 70px); gap: 10px; justify-content: center; margin-top: 15px; }
-                .btn { background: #222; border: 2px solid #fff; color: white; font-size: 1.5rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; user-select: none; touch-action: manipulation; }
-                .btn:active { background: #444; }
-                .empty { visibility: hidden; }
-            </style>
-            <h1>🐍 Snake Game</h1>
-            <p id='score'>Score: 0</p>
-            <div class="game-container">
-                <canvas id="game" width="400" height="400"></canvas>
-                <div id="overlay" class="overlay">
-                    <div>try again?</div>
-                    <div id="trash" class="trash-talk"></div>
-                </div>
-            </div>
-            
-            <div class="mobile-controls">
-                <div class="empty"></div><div class="btn" id="btn-up">▲</div><div class="empty"></div>
-                <div class="btn" id="btn-left">◀</div><div class="empty"></div><div class="btn" id="btn-right">▶</div>
-                <div class="empty"></div><div class="btn" id="btn-down">▼</div><div class="empty"></div>
-            </div>
+const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+let grid = 20, score = 0, gameRunning = true;
+let snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
+let dx = grid, dy = 0;
+let food = {x: 80, y: 80};
 
-            <script>
-            const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
-            const overlay = document.getElementById('overlay'), trashBox = document.getElementById('trash');
-            let grid = 20, score = 0, gameRunning = true;
-            let snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
-            let dx = grid, dy = 0;
-            let food = {x: 80, y: 80};
+// Sarcastic trash-talk lines requested by user
+const wallInsults = [
+    "Maybe pay attention next time?",
+    "Hey idiot, the apple's over there.",
+    "Imagine losing in a snake game lmfao"
+];
 
-            const edgeInsults = ["Maybe pay attention next time?", "Hey idiot, the apple's over there.", "Imagine losing in a snake game lmfao"];
-            const selfInsults = ["Maybe don't hit yourself", "Stop hitting yourself stop hitting yourself", "Hey idiot, the apple's over there.", "Imagine losing in a snake game lmfao"];
+const selfInsults = [
+    "Maybe don't hit yourself",
+    "Stop hitting yourself stop hitting yourself",
+    "Imagine losing in a snake game lmfao"
+];
 
-            function main() {
-                if (!gameRunning) return;
-                let reason = checkGameOver();
-                if (reason) {
-                    gameRunning = false;
-                    overlay.style.display = 'flex';
-                    
-                    let lines = reason === 'wall' ? edgeInsults : selfInsults;
-                    trashBox.innerText = lines[Math.floor(Math.random() * lines.length)];
-                    
-                    setTimeout(resetGame, 3000);
-                    return;
-                }
-                setTimeout(function() { clear(); drawFood(); move(); drawSnake(); main(); }, 150);
-            }
-            function resetGame() {
-                snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
-                dx = grid; dy = 0; score = 0;
-                document.getElementById('score').innerText = 'Score: ' + score;
-                overlay.style.display = 'none';
-                food = {x: Math.floor(Math.random()*20)*grid, y: Math.floor(Math.random()*20)*grid};
-                gameRunning = true;
-                main();
-            }
-            function clear() { ctx.fillStyle = '#111'; ctx.fillRect(0,0,canvas.width,canvas.height); }
-            function drawSnake() { ctx.fillStyle = 'lime'; snake.forEach(s => ctx.fillRect(s.x, s.y, grid-2, grid-2)); }
-            function move() {
-                const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-                snake.unshift(head);
-                if(head.x === food.x && head.y === food.y) {
-                    score += 10; document.getElementById('score').innerText = 'Score: ' + score;
-                    food = {x: Math.floor(Math.random()*20)*grid, y: Math.floor(Math.random()*20)*grid};
-                } else snake.pop();
-            }
-            function checkGameOver() {
-                const h = snake[0];
-                if (h.x < 0 || h.x >= canvas.width || h.y < 0 || h.y >= canvas.height) return 'wall';
-                for(let i = 1; i < snake.length; i++) {
-                    if(snake[i].x === h.x && snake[i].y === h.y) return 'self';
-                }
-                return null;
-            }
-            
-            function handleInput(dir) {
-                if (!gameRunning) return;
-                if(dir === 'up' && dy === 0) { dx = 0; dy = -grid; }
-                if(dir === 'down' && dy === 0) { dx = 0; dy = grid; }
-                if(dir === 'left' && dx === 0) { dx = -grid; dy = 0; }
-                if(dir === 'right' && dx === 0) { dx = grid; dy = 0; }
-            }
+function main() {
+    if (!gameRunning) return;
+    
+    let collisionType = gameOver();
+    if (collisionType) {
+        gameRunning = false;
+        showTryAgainOverlay(collisionType);
+        setTimeout(resetGame, 2000);
+        return;
+    }
+    
+    setTimeout(function() { 
+        clear(); 
+        drawFood(); 
+        move(); 
+        drawSnake(); 
+        main(); 
+    }, 150);
+}
 
-            window.addEventListener('keydown', e => {
-                const key = e.key.toLowerCase();
-                if(['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) e.preventDefault();
-                if(key==='arrowup' || key==='w') handleInput('up');
-                if(key==='arrowdown' || key==='s') handleInput('down');
-                if(key==='arrowleft' || key==='a') handleInput('left');
-                if(key==='arrowright' || key==='d') handleInput('right');
-            });
+function resetGame() {
+    snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
+    dx = grid; dy = 0; score = 0;
+    document.getElementById('score').innerText = 'Score: ' + score;
+    
+    // Remove the custom try again overlay
+    const overlay = document.getElementById('try-again-overlay');
+    if (overlay) overlay.remove();
+    
+    food = {x: Math.floor(Math.random()*20)*grid, y: Math.floor(Math.random()*20)*grid};
+    gameRunning = true;
+    main();
+}
 
-            document.getElementById('btn-up').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('up'); });
-            document.getElementById('btn-down').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('down'); });
-            document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('left'); });
-            document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('right'); });
-            document.getElementById('btn-up').addEventListener('click', () => handleInput('up'));
-            document.getElementById('btn-down').addEventListener('click', () => handleInput('down'));
-            document.getElementById('btn-left').addEventListener('click', () => handleInput('left'));
-            document.getElementById('btn-right').addEventListener('click', () => handleInput('right'));
+function clear() { 
+    ctx.fillStyle = '#111'; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height); 
+}
+
+function drawSnake() { 
+    ctx.fillStyle = 'lime'; 
+    snake.forEach(s => ctx.fillRect(s.x, s.y, grid - 2, grid - 2)); 
+}
+
+function move() {
+    // FIXED: Correctly tracking head position from array indexing instead of singular object property
+    const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+    snake.unshift(head);
+    if (head.x === food.x && head.y === food.y) {
+        score += 10; 
+        document.getElementById('score').innerText = 'Score: ' + score;
+        food = {x: Math.floor(Math.random()*20)*grid, y: Math.floor(Math.random()*20)*grid};
+    } else {
+        snake.pop();
+    }
+}
+
+function gameOver() {
+    // FIXED: Evaluating properties on the array segment directly
+    const h = snake[0];
+    const wallCollision = h.x < 0 || h.x >= canvas.width || h.y < 0 || h.y >= canvas.height;
+    
+    let selfCollision = false;
+    for (let i = 1; i < snake.length; i++) {
+        if (snake[i].x === h.x && snake[i].y === h.y) {
+            selfCollision = true;
+        }
+    }
+    
+    if (wallCollision) return 'wall';
+    if (selfCollision) return 'self';
+    return null;
+}
+
+function showTryAgainOverlay(reason) {
+    let message = "";
+    if (reason === 'wall') {
+        message = wallInsults[Math.floor(Math.random() * wallInsults.length)];
+    } else {
+        message = selfInsults[Math.floor(Math.random() * selfInsults.length)];
+    }
+
+    // Create a dynamic, centered responsive mobile layout overlay box 
+    const container = canvas.parentElement;
+    const overlay = document.createElement('div');
+    overlay.id = 'try-again-overlay';
+    overlay.style = `
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
+        color: white; font-family: sans-serif; text-align: center;
+    `;
+    overlay.innerHTML = `
+        <h2 style="color: #ff4b4b; margin-bottom: 10px;">try again?</h2>
+        <p style="font-style: italic; color: #ccc; padding: 0 20px;">"${message}"</p>
+    `;
+    container.style.position = 'relative';
+    container.appendChild(overlay);
+}
+
+// Mobile and Keyboard movement routing configuration wrapper
+function changeDirection(dir) {
+    if (!gameRunning) return;
+    if (dir === 'up' && dy === 0) { dx = 0; dy = -grid; }
+    if (dir === 'down' && dy === 0) { dx = 0; dy = grid; }
+    if (dir === 'left' && dx === 0) { dx = -grid; dy = 0; }
+    if (dir === 'right' && dx === 0) { dx = grid; dy = 0; }
+}
+
+window.addEventListener('keydown', e => {
+    const key = e.key.toLowerCase();
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+    }
+    if (e.key === 'ArrowUp' || key === 'w') changeDirection('up');
+    if (e.key === 'ArrowDown' || key === 's') changeDirection('down');
+    if (e.key === 'ArrowLeft' || key === 'a') changeDirection('left');
+    if (e.key === 'ArrowRight' || key === 'd') changeDirection('right');
+});
+
+main();
+
             main();
             </script>
         """,
