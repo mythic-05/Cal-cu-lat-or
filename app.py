@@ -452,7 +452,7 @@ else:
     components.html(games[cleaned_mode], height=560)
 
     
-            "🍕 Pac-Man": """
+"🍕 Pac-Man": """
             <style>
                 canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; } 
                 h1, p { color: white; text-align: center; font-family: sans-serif; }
