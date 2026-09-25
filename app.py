@@ -450,6 +450,8 @@ else:
     cleaned_mode = app_mode.replace("🕹️Tetris", "🕹️Tetris").strip()
     st.title(app_mode)
     components.html(games[cleaned_mode], height=560)
+
+    
             "🍕 Pac-Man": """
             <style>
                 canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; } 
