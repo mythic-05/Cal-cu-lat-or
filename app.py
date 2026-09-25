@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 import time
 import streamlit.components.v1 as components
