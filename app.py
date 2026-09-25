@@ -9,7 +9,7 @@ st.set_page_config(page_title="Web Arcade", layout="centered")
 st.sidebar.title(" Applications ")
 app_mode = st.sidebar.radio(
     "Choose a tool to load:",
-    ["🔢 Calculator", "🐍 Snake", "🟓 Pong", "🕹️Tetris", "🦖 Blob Run"]
+    ["🔢 Calculator", "🐍 Snake", "🟓 Pong", "🕹️Tetris", "🦖 Blob Run", "🍕 Pac-Man"]
 )
 
 # -------------------------------------------------------------
@@ -127,7 +127,6 @@ else:
             }
             window.addEventListener('keydown', e => {
                 const key = e.key.toLowerCase();
-                // Block native window scrolling actions
                 if(['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) {
                     e.preventDefault();
                 }
@@ -444,15 +443,8 @@ else:
             });
             loop();
             </script>
-        """
-    }
-
-    cleaned_mode = app_mode.replace("🕹️Tetris", "🕹️Tetris").strip()
-    st.title(app_mode)
-    components.html(games[cleaned_mode], height=560) 
-
-    
-  "🍕 Pac-Man": """
+        """,
+        "🍕 Pac-Man": """
             <style>
                 canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; } 
                 h1, p { color: white; text-align: center; font-family: sans-serif; }
@@ -467,32 +459,34 @@ else:
             const tileSize = 20;
             let score = 0, gameRunning = true;
 
-            let map = [,
- ,
- ,
- ,
- ,
- ,
- ,
- ,
- ,
- ,
- ,
- ,
- ,
- ,
- ,
- ,
- ,
- ,
+            // Fully structured 19x19 classic layout array (1 = Wall, 0 = Pellet, 2 = Empty Path)
+            let map = [
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+                [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,0,1],
+                [1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
+                [1,1,1,1,0,1,1,1,2,1,2,1,1,1,0,1,1,1,1],
+                [2,2,2,1,0,1,2,2,2,2,2,2,2,1,0,1,2,2,2],
+                [1,1,1,1,0,1,2,1,1,2,1,1,2,1,0,1,1,1,1],
+                [2,2,2,2,0,2,2,1,2,2,2,1,2,2,0,2,2,2,2],
+                [1,1,1,1,0,1,2,1,1,1,1,1,2,1,0,1,1,1,1],
+                [2,2,2,1,0,1,2,2,2,2,2,2,2,1,0,1,2,2,2],
+                [1,1,1,1,0,1,2,1,1,1,1,1,2,1,0,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+                [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
+                [1,0,0,1,0,0,0,0,0,2,0,0,0,0,0,1,0,0,1],
+                [1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1],
+                [1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
             ];
 
             let pacman = { x: 9, y: 15, dx: 0, dy: 0, nextDx: 0, nextDy: 0 };
             let ghosts = [
-                { x: 9, y: 8, dx: 1, dy: 0, color: 'red' },
-                { x: 8, y: 10, dx: -1, dy: 0, color: 'pink' },
-                { x: 10, y: 10, dx: 1, dy: 0, color: 'cyan' }
+                { x: 9, y: 7, dx: 1, dy: 0, color: 'red' },
+                { x: 8, y: 9, dx: -1, dy: 0, color: 'pink' },
+                { x: 10, y: 9, dx: 1, dy: 0, color: 'cyan' }
             ];
 
             function isWall(gridX, gridY) {
@@ -518,7 +512,6 @@ else:
                     }
                 }
 
-                // Render Pacman as a yellow emoji circle with an open mouth orientation angle
                 let centerX = pacman.x * tileSize + tileSize / 2;
                 let centerY = pacman.y * tileSize + tileSize / 2;
                 let radius = tileSize / 2 - 1;
@@ -606,9 +599,9 @@ else:
                 document.getElementById('status').innerText = '🟢 Game Status: Active';
                 pacman = { x: 9, y: 15, dx: 0, dy: 0, nextDx: 0, nextDy: 0 };
                 ghosts = [
-                    { x: 9, y: 8, dx: 1, dy: 0, color: 'red' },
-                    { x: 8, y: 10, dx: -1, dy: 0, color: 'pink' },
-                    { x: 10, y: 10, dx: 1, dy: 0, color: 'cyan' }
+                    { x: 9, y: 7, dx: 1, dy: 0, color: 'red' },
+                    { x: 8, y: 9, dx: -1, dy: 0, color: 'pink' },
+                    { x: 10, y: 9, dx: 1, dy: 0, color: 'cyan' }
                 ];
                 for (let r = 0; r < 19; r++) {
                     for (let c = 0; c < 19; c++) {
@@ -636,4 +629,8 @@ else:
             update();
             </script>
         """
+    }
 
+    cleaned_mode = app_mode.strip()
+    st.title(app_mode)
+    components.html(games[cleaned_mode], height=560)
