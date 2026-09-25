@@ -755,5 +755,4 @@ else:
     cleaned_mode = app_mode.strip()
     if cleaned_mode in games:
         components.html(games[cleaned_mode], height=680)
-
-```
+        
