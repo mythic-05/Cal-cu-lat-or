@@ -10,7 +10,7 @@ st.set_page_config(page_title="Web Arcade", layout="centered")
 st.sidebar.title(" Applications ")
 app_mode = st.sidebar.radio(
     "Choose a tool to load:",
-    ["🔢 Calculator", "🐍 Snake", "👾 Space Invaders", "🕹️Tetris", "🍕 Pac-Man"]
+    ["🔢 Calculator", "🐍 Snake", "👾 Space Invaders", "🕹️Tetris", "🦖 T-Rex Run"]
 )
 
 
@@ -173,7 +173,8 @@ elif app_mode == "🐍 Snake":
         for i, (sx, sy) in enumerate(st.session_state.snake):
             grid[sy][sx] = "🟩" if i > 0 else "🐲"
 
-    st.text("\n".join([" ".join(row) for row in grid]))
+    st.text("
+".join([" ".join(row) for row in grid]))
     st.write(f"🏆 Current Score: **{st.session_state.score}**")
 
     snake_controls = st.container()
@@ -234,7 +235,8 @@ elif app_mode == "👾 Space Invaders":
                 lx, ly = st.session_state.active_laser
                 si_grid[ly][lx] = "⚡"
             si_grid[9][st.session_state.player_x] = "🚀"
-        return "\n".join([" ".join(row) for row in si_grid])
+        return "
+".join([" ".join(row) for row in si_grid])
 
     grid_placeholder = st.empty()
     score_placeholder = st.empty()
@@ -427,7 +429,8 @@ elif app_mode == "🕹️Tetris":
                     if 0 <= y_pos < T_ROWS and 0 <= x_pos < T_COLS:
                         display_board[y_pos][x_pos] = p["color"]
 
-        grid_string = "\n".join([" ".join(row) for row in display_board])
+        grid_string = "
+".join([" ".join(row) for row in display_board])
         grid_placeholder.text(grid_string)
         score_placeholder.write(f"🏆 Score: **{st.session_state.t_score}**")
 
@@ -453,174 +456,110 @@ elif app_mode == "🕹️Tetris":
 
 
 # -------------------------------------------------------------
-# PAGE 5: PLAYABLE PAC-MAN
+# PAGE 5: PLAYABLE T-REX RUN (GOOGLE DINO GAME)
 # -------------------------------------------------------------
-elif app_mode == "🍕 Pac-Man":
-    st.title("🍕 Pac-Man")
-    st.caption("Escape all 4 ghosts and eat pellets!")
+elif app_mode == "🦖 T-Rex Run":
+    st.title("🦖 T-Rex Run")
+    st.caption("🎮 KEYBOARD ENABLED: Press Spacebar, Arrow Up, or W to jump over cacti!")
 
     inject_keyboard_engine({
-        "ArrowUp": "Up", "w": "Up", "W": "Up",
-        "ArrowDown": "Down", "s": "Down", "S": "Down",
-        "ArrowLeft": "Left", "a": "Left", "A": "Left",
-        "ArrowRight": "Right", "d": "Right", "D": "Right"
+        " ": "Jump", "ArrowUp": "Jump", "w": "Jump", "W": "Jump"
     })
 
-    PAC_MAZE = [
-        [1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 0, 1, 0, 0, 0, 1],
-        [1, 0, 1, 0, 1, 0, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 0, 1, 0, 1, 1, 1],
-        [1, 0, 0, 0, 1, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 1, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1]
-    ]
-    M_ROWS, M_COLS = 9, 9
+    # Lane Configuration Constants
+    ROAD_WIDTH = 16
+    ROAD_HEIGHT = 4
 
-    if 'pac_x' not in st.session_state:
-        st.session_state.pac_x = 1
-        st.session_state.pac_y = 1
-        st.session_state.pac_face = "😮"
-        st.session_state.ghosts = [
-            {"x": 7, "y": 7, "icon": "🔴", "type": "blinky"},
-            {"x": 1, "y": 7, "icon": "🌸", "type": "pinky"},
-            {"x": 7, "y": 1, "icon": "🔵", "type": "inky"},
-            {"x": 3, "y": 3, "icon": "🟠", "type": "clyde"}
-        ]
-        st.session_state.dots = [(r, c) for r in range(M_ROWS) for c in range(M_COLS) if PAC_MAZE[r][c] == 0]
-        st.session_state.pac_score = 0
-        st.session_state.pac_game_over = False
-        st.session_state.pac_victory = False
+    if 'dino_y' not in st.session_state:
+        st.session_state.dino_y = 0  # 0 = Grounded level, 1 = Jump peak height
+        st.session_state.dino_air_time = 0
+        st.session_state.obstacles = [8, 14]  # X positions of cacti
+        st.session_state.dino_score = 0
+        st.session_state.dino_game_over = False
 
-    def reset_pacman():
-        st.session_state.pac_x = 1
-        st.session_state.pac_y = 1
-        st.session_state.pac_face = "😮"
-        st.session_state.ghosts = [
-            {"x": 7, "y": 7, "icon": "🔴", "type": "blinky"},
-            {"x": 1, "y": 7, "icon": "🌸", "type": "pinky"},
-            {"x": 7, "y": 1, "icon": "🔵", "type": "inky"},
-            {"x": 3, "y": 3, "icon": "🟠", "type": "clyde"}
-        ]
-        st.session_state.dots = [(r, c) for r in range(M_ROWS) for c in range(M_COLS) if PAC_MAZE[r][c] == 0]
-        st.session_state.pac_score = 0
-        st.session_state.pac_game_over = False
-        st.session_state.pac_victory = False
+    def reset_dino():
+        st.session_state.dino_y = 0
+        st.session_state.dino_air_time = 0
+        st.session_state.obstacles = [8, 14]
+        st.session_state.dino_score = 0
+        st.session_state.dino_game_over = False
 
-    def run_pacman_turn(direction):
-        if st.session_state.pac_game_over or st.session_state.pac_victory:
+    def run_dino_step(action):
+        if st.session_state.dino_game_over:
             return
 
-        if direction in ["UP", "DOWN"]:
-            st.session_state.pac_face = "😲" if st.session_state.pac_face == "😮" else "😮"
-        elif direction in ["LEFT", "RIGHT"]:
-            st.session_state.pac_face = "😋" if st.session_state.pac_face == "😮" else "😮"
+        # Handle explicit programmatic Jump trigger mechanism
+        if action == "JUMP" and st.session_state.dino_y == 0:
+            st.session_state.dino_y = 1
+            st.session_state.dino_air_time = 2  # Stays up for 2 frames
 
-        next_x, next_y = st.session_state.pac_x, st.session_state.pac_y
-        if direction == "UP": next_y -= 1
-        elif direction == "DOWN": next_y += 1
-        elif direction == "LEFT": next_x -= 1
-        elif direction == "RIGHT": next_x += 1
+        # Advance game engine score metrics
+        st.session_state.dino_score += 1
 
-        if 0 <= next_y < M_ROWS and 0 <= next_x < M_COLS:
-            if PAC_MAZE[next_y][next_x] != 1:
-                st.session_state.pac_x = next_x
-                st.session_state.pac_y = next_y
+        # Process obstacle animation scroll translations leftward
+        new_obstacles = []
+        for obs_x in st.session_state.obstacles:
+            next_x = obs_x - 1
+            if next_x < 0:
+                # Recycle obstacle right past screen visibility boundary edge
+                next_x = ROAD_WIDTH - 1 + random.randint(1, 4)
+            
+            # Prevent stacking overlap glitches
+            if next_x not in new_obstacles:
+                new_obstacles.append(next_x)
+        
+        st.session_state.obstacles = sorted(new_obstacles)
 
-        current_loc = (st.session_state.pac_y, st.session_state.pac_x)
-        if current_loc in st.session_state.dots:
-            st.session_state.dots.remove(current_loc)
-            st.session_state.pac_score += 10
+        # Process jump hang-time state machine mechanics
+        if st.session_state.dino_y == 1:
+            st.session_state.dino_air_time -= 1
+            if st.session_state.dino_air_time <= 0:
+                st.session_state.dino_y = 0
 
-        if len(st.session_state.dots) == 0:
-            st.session_state.pac_victory = True
-            return
+        # Collision detection calculation checks (Dino is at static columns 1-2)
+        for obs_x in st.session_state.obstacles:
+            if (obs_x == 2 or obs_x == 1) and st.session_state.dino_y == 0:
+                st.session_state.dino_game_over = True
 
-        px, py = st.session_state.pac_x, st.session_state.pac_y
-        for ghost in st.session_state.ghosts:
-            gx, gy = ghost["x"], ghost["y"]
-            possible_moves = []
-
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                nx, ny = gx + dx, gy + dy
-                if 0 <= ny < M_ROWS and 0 <= nx < M_COLS and PAC_MAZE[ny][nx] != 1:
-                    possible_moves.append((nx, ny))
-
-            if possible_moves:
-                if ghost["type"] == "blinky":
-                    best_move = min(possible_moves, key=lambda m: abs(m[0]-px) + abs(m[1]-py))
-                elif ghost["type"] == "pinky":
-                    target_x = px + 2 if direction == "RIGHT" else (px - 2 if direction == "LEFT" else px)
-                    target_y = py + 2 if direction == "DOWN" else (py - 2 if direction == "UP" else py)
-                    best_move = min(possible_moves, key=lambda m: abs(m[0]-target_x) + abs(m[1]-target_y))
-                elif ghost["type"] == "clyde":
-                    dist = abs(gx-px) + abs(gy-py)
-                    if dist > 4:
-                        best_move = min(possible_moves, key=lambda m: abs(m[0]-px) + abs(m[1]-py))
-                    else:
-                        best_move = min(possible_moves, key=lambda m: abs(m[0]-1) + abs(m[1]-7))
-                else:
-                    best_move = random.choice(possible_moves)
-
-                ghost["x"], ghost["y"] = best_move[0], best_move[1]
-
-        for ghost in st.session_state.ghosts:
-            if ghost["x"] == st.session_state.pac_x and ghost["y"] == st.session_state.pac_y:
-                st.session_state.pac_game_over = True
-
+    # Render Graphics Composition Frames Layer Arrays
     grid_placeholder = st.empty()
     score_placeholder = st.empty()
     controls_placeholder = st.empty()
 
-    if st.session_state.pac_game_over:
+    if st.session_state.dino_game_over:
         grid_placeholder.empty()
-        score_placeholder.write(f"🏆 Final Score: **{st.session_state.pac_score}**")
+        score_placeholder.write(f"🏆 Final Score: **{st.session_state.dino_score}**")
         with controls_placeholder:
-            st.error("Waka Waka... Caught by a Ghost! Game Over.")
-            if st.button("Play Again", key="pac_retry_lost"):
-                reset_pacman(); st.rerun()
-    elif st.session_state.pac_victory:
-        grid_placeholder.empty()
-        score_placeholder.write(f"🏆 High Score: **{st.session_state.pac_score}**")
-        with controls_placeholder:
-            st.success("🎉 Victory! You cleared the maze and beat the ghosts!")
-            if st.button("Play Again", key="pac_retry_win"):
-                reset_pacman(); st.rerun()
+            st.error("💥 CRASH! You hit a cactus. Game Over.")
+            if st.button("Play Again", key="dino_retry_lost"):
+                reset_dino()
+                st.rerun()
     else:
-        display_grid = [["🟦" if cell == 1 else "🔸" for cell in row] for row in PAC_MAZE]
+        # Construct empty atmospheric camera frames canvas matrix maps
+        scene_canvas = [["☁️" if random.random() < 0.05 else "⬜" for _ in range(ROAD_WIDTH)] for _ in range(ROAD_HEIGHT)]
         
-        for r in range(M_ROWS):
-            for c in range(M_COLS):
-                if PAC_MAZE[r][c] == 0 and (r, c) not in st.session_state.dots:
-                    display_grid[r][c] = "⬛"
+        # Overlay ground environment terrain layer row
+        scene_canvas[3] = ["🟫"] * ROAD_WIDTH
 
-        for ghost in st.session_state.ghosts:
-            display_grid[ghost["y"]][ghost["x"]] = ghost["icon"]
-            
-        display_grid[st.session_state.pac_y][st.session_state.pac_x] = st.session_state.pac_face
+        # Draw active obstacle cacti entities
+        for obs_x in st.session_state.obstacles:
+            if 0 <= obs_x < ROAD_WIDTH:
+                scene_canvas[2][obs_x] = "🌵"
 
-        grid_string = "\n".join([" ".join(row) for row in display_grid])
-        grid_placeholder.text(grid_string)
-        score_placeholder.write(f"🏆 Score: **{st.session_state.pac_score}** | 🔸 Remaining Pellets: **{len(st.session_state.dots)}**")
+        # Map dynamic Dino position states contextually
+        dino_row = 2 if st.session_state.dino_y == 0 else 1
+        scene_canvas[dino_row][2] = "🦖"
+
+        grid_placeholder.text("
+".join([" ".join(row) for row in scene_canvas]))
+        score_placeholder.write(f"🏆 Score: **{st.session_state.dino_score}**")
 
         with controls_placeholder:
-            st.write("--- Controls ---")
-            p_col1, p_col2, p_col3 = st.columns(3)
-            with p_col2:
-                if st.button("🔼 Up", key="pac_b_up"):
-                    run_pacman_turn("UP"); st.rerun()
-            p_col4, p_col5, p_col6 = st.columns(3)
-            with p_col4:
-                if st.button("◀️ Left", key="pac_b_left"):
-                    run_pacman_turn("LEFT"); st.rerun()
-            with p_col5:
-                st.write("D-Pad")
-            with p_col6:
-                if st.button("▶️ Right", key="pac_b_right"):
-                    run_pacman_turn("RIGHT"); st.rerun()
-            p_col7, p_col8, p_col9 = st.columns(3)
-            with p_col8:
-                if st.button("🔽 Down", key="pac_b_down"):
-                    run_pacman_turn("DOWN"); st.rerun()
+            if st.button("🦘 Jump", key="dino_b_jump"):
+                run_dino_step("JUMP")
+                st.rerun()
+
+        # Frame loop timer ticking speed pacing increments
+        time.sleep(0.180)
+        run_dino_step("TICK")
+        st.rerun()
