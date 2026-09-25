@@ -25,11 +25,11 @@ if app_mode == "🔢 Calculator":
 
     val2 = st.number_input("Second Number (y):", value=0.0, step=0.1, key="calc_val2")
     if val2 == 67:
-        st.error("67 in the big 26 🥀")
+        st.error("67 in the big 26 \ud83e\udd40")
     
     operation = st.selectbox(
         "Select Operation:",
-        ["Addition (+)", "Subtraction (-)", "Multiplication (×)", "Division (÷)", "Power (x^y)", "Remainder (%)", "Absolute Value |x|"],
+        ["Addition (+)", "Subtraction (-)", "Multiplication (\u00d7)", "Division (\u00f7)", "Power (x^y)", "Remainder (%)", "Absolute Value |x|"],
         key="calc_operation"
     )
 
@@ -37,7 +37,7 @@ if app_mode == "🔢 Calculator":
         st.write("---")
         if operation == "Addition (+)":
             if (val1 == 9 and val2 == 10) or (val1 == 10 and val2 == 9):
-                st.success("🗣️ 21 YOU STUPID")
+                st.success("\ud83d\udde3\ufe0f 21 YOU STUPID")
             elif val1 == 67 and val2 == 67:
                 st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly.")
             else:
@@ -47,19 +47,19 @@ if app_mode == "🔢 Calculator":
                 st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly.")
             else:
                 st.success(f"Result: {val1 - val2}")
-        elif operation == "Multiplication (×)":
+        elif operation == "Multiplication (\u00d7)":
             if val1 == 67 and val2 == 67:
                 st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly.")
             else:
                 st.success(f"Result: {val1 * val2}")
-        elif operation == "Division (÷)":
+        elif operation == "Division (\u00f7)":
             if val2 == 0:
                 countdown_box = st.empty()
                 for seconds_left in range(5, 0, -1):
                     countdown_box.error(f"Why tf you divide by zero im cooked {seconds_left} SECONDS...")
                     time.sleep(1) 
                 countdown_box.empty()
-                st.write("# yes rico kabo-💥💥💥💥💥💥")
+                st.write("# yes rico kabo-\ud83d\udca5\ud83d\udca5\ud83d\udca5\ud83d\udca5\ud83d\udca5\ud83d\ca5")
                 st.error("The calculation logic has completely vaporized.")
             else:
                 st.success(f"Result: {val1 / val2}")
@@ -69,16 +69,32 @@ if app_mode == "🔢 Calculator":
 # -------------------------------------------------------------
 else:
     games = {
-        "🐍 Snake": """
+        "\ud83d\udc0d Snake": """
             <style>
-                canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; } 
-                h1, p { color: white; text-align: center; font-family: sans-serif; }
-                .status-container { text-align: center; margin-top: 15px; }
-                .status-box { display: inline-block; background-color: #2b2b2b; color: #ff4b4b; font-family: sans-serif; font-size: 1.1rem; padding: 10px 20px; border-radius: .5rem; border: 1px solid #ff4b4b; font-weight: bold; }
+                body { margin: 0; font-family: sans-serif; background: #0e1117; color: white; touch-action: manipulation; }
+                canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; max-width: 100%; height: auto; } 
+                h1, p { text-align: center; margin: 5px 0; }
+                .game-container { position: relative; width: 400px; margin: auto; max-width: 100%; }
+                .overlay-msg { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); color: #ff4b4b; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid #ff4b4b; font-weight: bold; font-size: 1.2rem; width: 80%; box-sizing: border-box; }
+                .mobile-controls { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 10px; justify-content: center; margin-top: 15px; }
+                .btn { background: #2b2b2b; color: white; border: 2px solid #555; border-radius: 10px; font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; }
+                .btn:active { background: #ff4b4b; border-color: #fff; }
+                .up { grid-column: 2; grid-row: 1; }
+                .left { grid-column: 1; grid-row: 2; }
+                .right { grid-column: 3; grid-row: 2; }
+                .down { grid-column: 2; grid-row: 3; }
             </style>
-            <h1>🐍 Snake Game</h1><p id='score'>Score: 0</p>
-            <canvas id="game" width="400" height="400"></canvas>
-            <div class="status-container"><div id="status" class="status-box">🟢 Game Status: Active</div></div>
+            <h1>\ud83d\udc0d Snake Game</h1><p id='score'>Score: 0</p>
+            <div class="game-container">
+                <canvas id="game" width="400" height="400"></canvas>
+                <div id="overlay" class="overlay-msg"></div>
+            </div>
+            <div class="mobile-controls">
+                <button class="btn up" onclick="handleBtn('up')">\u25b2</button>
+                <button class="btn left" onclick="handleBtn('left')">\u25c0</button>
+                <button class="btn right" onclick="handleBtn('right')">\u25b6</button>
+                <button class="btn down" onclick="handleBtn('down')">\u25bc</button>
+            </div>
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
             let grid = 20, score = 0, gameRunning = true;
@@ -86,21 +102,43 @@ else:
             let dx = grid, dy = 0;
             let food = {x: 80, y: 80};
 
+            const generalLines = [
+                "Hey idiot, the apple's over there.",
+                "Nice one!",
+                "Imagine losing in a snake game lmfao"
+            ];
+            const edgeLines = ["Maybe pay attention next time?"];
+            const selfLines = [
+                "Maybe don't hit yourself",
+                "Stop hitting yourself stop hitting yourself"
+            ];
+
             function main() {
                 if (!gameRunning) return;
-                if (gameOver()) {
+                let reason = checkGameOver();
+                if (reason) {
                     gameRunning = false;
-                    document.getElementById('status').innerText = '❌ Game Over! Restarting...';
-                    setTimeout(resetGame, 2000);
+                    showTryAgain(reason);
+                    setTimeout(resetGame, 2500);
                     return;
                 }
                 setTimeout(function() { clear(); drawFood(); move(); drawSnake(); main(); }, 150);
+            }
+            function showTryAgain(reason) {
+                let pool = [...generalLines];
+                if (reason === 'edge') pool.push(...edgeLines);
+                if (reason === 'self') pool.push(...selfLines);
+                let randomLine = pool[Math.floor(Math.random() * pool.length)];
+                
+                const overlay = document.getElementById('overlay');
+                overlay.innerHTML = `try again?<br><span style="font-size:0.9rem; font-weight:normal; color:white; display:block; margin-top:8px;">${randomLine}</span>`;
+                overlay.style.display = 'block';
             }
             function resetGame() {
                 snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
                 dx = grid; dy = 0; score = 0;
                 document.getElementById('score').innerText = 'Score: ' + score;
-                document.getElementById('status').innerText = '🟢 Game Status: Active';
+                document.getElementById('overlay').style.display = 'none';
                 food = {x: 80, y: 80};
                 gameRunning = true;
                 main();
@@ -115,37 +153,63 @@ else:
                     food = {x: Math.floor(Math.random()*20)*grid, y: Math.floor(Math.random()*20)*grid};
                 } else snake.pop();
             }
-            function drawFood() { ctx.fillStyle = 'red'; ctx.fillRect(food.x, food.y, grid-2, grid-2); }
-            function gameOver() {
+            function checkGameOver() {
                 const h = snake[0];
                 const wallCollision = h.x < 0 || h.x >= canvas.width || h.y < 0 || h.y >= canvas.height;
-                let selfCollision = false;
+                if (wallCollision) return 'edge';
                 for(let i = 1; i < snake.length; i++) {
-                    if(snake[i].x === h.x && snake[i].y === h.y) selfCollision = true;
+                    if(snake[i].x === h.x && snake[i].y === h.y) return 'self';
                 }
-                return wallCollision || selfCollision;
+                return null;
+            }
+            function handleBtn(dir) {
+                if(!gameRunning) return;
+                if(dir === 'up' && dy === 0) { dx = 0; dy = -grid; }
+                if(dir === 'down' && dy === 0) { dx = 0; dy = grid; }
+                if(dir === 'left' && dx === 0) { dx = -grid; dy = 0; }
+                if(dir === 'right' && dx === 0) { dx = grid; dy = 0; }
             }
             window.addEventListener('keydown', e => {
                 const key = e.key.toLowerCase();
                 if(['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) {
                     e.preventDefault();
                 }
-                if((e.key==='ArrowUp' || key==='w') && dy===0){dx=0;dy=-grid;}
-                if((e.key==='ArrowDown' || key==='s') && dy===0){dx=0;dy=grid;}
-                if((e.key==='ArrowLeft' || key==='a') && dx===0){dx=-grid;dy=0;}
-                if((e.key==='ArrowRight' || key==='d') && dx===0){dx=grid;dy=0;}
+                if((e.key==='ArrowUp' || key==='w')) handleBtn('up');
+                if((e.key==='ArrowDown' || key==='s')) handleBtn('down');
+                if((e.key==='ArrowLeft' || key==='a')) handleBtn('left');
+                if((e.key==='ArrowRight' || key==='d')) handleBtn('right');
             });
             main();
             </script>
         """,
-        "🟓 Pong": """
+        "\ud83e\uddfd Pong": """
             <style>
-                canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; } 
-                h1, p { color: white; text-align: center; font-family: sans-serif; }
+                body { margin: 0; font-family: sans-serif; background: #000; color: white; touch-action: manipulation; }
+                canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; max-width: 100%; height: auto; } 
+                h1, p { text-align: center; }
+                .mobile-controls { display: flex; justify-content: space-around; margin-top: 15px; width: 100%; box-sizing: border-box; padding: 0 10px; }
+                .paddle-col { display: flex; flex-direction: column; gap: 10px; }
+                .btn { background: #2b2b2b; color: white; border: 2px solid #555; border-radius: 10px; font-size: 1.3rem; font-weight: bold; width: 70px; height: 60px; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; }
+                .btn:active { background: #00d2ff; border-color: #fff; }
+                .ctrl-label { text-align: center; font-size: 0.8rem; color: #aaa; margin-bottom: 2px; }
             </style>
-            <h1>🟓 Pong Match</h1>
+            <h1>\ud83e\uddfd Pong Match</h1>
             <p id="score-board">Left Player: 0 | Right Player: 0</p>
             <canvas id="game" width="600" height="400"></canvas>
+            
+            <div class="mobile-controls">
+                <div class="paddle-col">
+                    <div class="ctrl-label">Left Player</div>
+                    <button class="btn" ontouchstart="keys['w']=true" ontouchend="keys['w']=false" mousedown="keys['w']=true" mouseup="keys['w']=false">\u25b2</button>
+                    <button class="btn" ontouchstart="keys['s']=true" ontouchend="keys['s']=false" mousedown="keys['s']=true" mouseup="keys['s']=false">\ud83d\udd3b</button>
+                </div>
+                <div class="paddle-col">
+                    <div class="ctrl-label">Right Player</div>
+                    <button class="btn" ontouchstart="keys['arrowup']=true" ontouchend="keys['arrowup']=false" mousedown="keys['arrowup']=true" mouseup="keys['arrowup']=false">\u25b2</button>
+                    <button class="btn" ontouchstart="keys['arrowdown']=true" ontouchend="keys['arrowdown']=false" mousedown="keys['arrowdown']=true" mouseup="keys['arrowdown']=false">\ud83d\udd3b</button>
+                </div>
+            </div>
+
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
             let leftPaddle = {x: 10, y: 150, w: 10, h: 80}, rightPaddle = {x: 580, y: 150, w: 10, h: 80};
@@ -205,16 +269,29 @@ else:
             loop();
             </script>
         """,
-        "🕹️Tetris": """
+        "\ud83d\udd79\ufe0fTetris": """
             <style>
-                canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; } 
-                h1, p { color: white; text-align: center; font-family: sans-serif; }
-                .status-container { text-align: center; margin-top: 15px; }
-                .status-box { display: inline-block; background-color: #2b2b2b; color: #00d2ff; font-family: sans-serif; font-size: 1.1rem; padding: 10px 20px; border-radius: .5rem; border: 1px solid #00d2ff; font-weight: bold; }
+                body { margin: 0; font-family: sans-serif; background: #0e1117; color: white; touch-action: manipulation; }
+                canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; max-width: 100%; height: auto; } 
+                h1, p { text-align: center; margin: 5px 0; }
+                .game-container { position: relative; width: 240px; margin: auto; max-width: 100%; }
+                .overlay-msg { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); color: #00d2ff; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid #00d2ff; font-weight: bold; font-size: 1.2rem; width: 80%; box-sizing: border-box; }
+                .mobile-controls { display: grid; grid-template-columns: repeat(4, 55px); gap: 8px; justify-content: center; margin-top: 15px; }
+                .btn { background: #2b2b2b; color: white; border: 2px solid #555; border-radius: 10px; font-size: 1.1rem; font-weight: bold; height: 50px; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; }
+                .btn:ajax, .btn:active { background: #00d2ff; border-color: #fff; color: black; }
+                .span-2 { grid-column: span 2; }
             </style>
-            <h1>🕹️ Tetris</h1><p id='score'>Score: 0</p>
-            <canvas id="game" width="240" height="400"></canvas>
-            <div class="status-container"><div id="status" class="status-box">🟢 Game Status: Active</div></div>
+            <h1>\ud83d\udd79\ufe0f Tetris</h1><p id='score'>Score: 0</p>
+            <div class="game-container">
+                <canvas id="game" width="240" height="400"></canvas>
+                <div id="overlay" class="overlay-msg">try again?</div>
+            </div>
+            <div class="mobile-controls">
+                <button class="btn" onclick="handleBtn('left')">\u25c0</button>
+                <button class="btn" onclick="handleBtn('rotate')">\u21bb</button>
+                <button class="btn" onclick="handleBtn('right')">\u25b6</button>
+                <button class="btn" onclick="handleBtn('drop')">\u25bc</button>
+            </div>
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
             ctx.scale(20, 20);
@@ -295,12 +372,12 @@ else:
                 player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
                 if (collide(arena, player)) { 
                     gameRunning = false;
-                    document.getElementById('status').innerText = '❌ Game Over! Resetting...';
+                    document.getElementById('overlay').style.display = 'block';
                     setTimeout(() => {
                         arena.forEach(row => row.fill(0)); 
                         score = 0; 
                         document.getElementById('score').innerText = 'Score: ' + score;
-                        document.getElementById('status').innerText = '🟢 Game Status: Active';
+                        document.getElementById('overlay').style.display = 'none';
                         gameRunning = true;
                         playerReset();
                     }, 2000);
@@ -326,6 +403,17 @@ else:
                 matrix.forEach(row => row.reverse());
             }
 
+            function handleBtn(action) {
+                if (!gameRunning) return;
+                if(action === 'left') { player.pos.x--; if(collide(arena, player)) player.pos.x++; }
+                if(action === 'right') { player.pos.x++; if(collide(arena, player)) player.pos.x--; }
+                if(action === 'drop') { playerDrop(); }
+                if(action === 'rotate') { 
+                    rotate(player.matrix); 
+                    if(collide(arena, player)) { rotate(player.matrix); rotate(player.matrix); rotate(player.matrix); }
+                }
+            }
+
             let dropCounter = 0, lastTime = 0;
             function update(time = 0) { 
                 const deltaTime = time - lastTime; lastTime = time; dropCounter += deltaTime; 
@@ -339,27 +427,34 @@ else:
                 if(['arrowleft', 'arrowright', 'arrowdown', 'a', 'd', 's', ' '].includes(key)) {
                     e.preventDefault();
                 }
-                if(key==='arrowleft' || key==='a') { player.pos.x--; if(collide(arena, player)) player.pos.x++; }
-                if(key==='arrowright' || key==='d') { player.pos.x++; if(collide(arena, player)) player.pos.x--; }
-                if(key==='arrowdown' || key==='s') { playerDrop(); }
-                if(e.key===' ') { 
-                    rotate(player.matrix); 
-                    if(collide(arena, player)) { rotate(player.matrix); rotate(player.matrix); rotate(player.matrix); }
-                }
+                if(key==='arrowleft' || key==='a') handleBtn('left');
+                if(key==='arrowright' || key==='d') handleBtn('right');
+                if(key==='arrowdown' || key==='s') handleBtn('drop');
+                if(e.key===' ') handleBtn('rotate');
             });
             playerReset(); update();
             </script>
         """,
-        "🦖 Blob Run": """
+        "\ud83e\udd96 Blob Run": """
             <style>
-                canvas { background: #f7f7f7; display: block; margin: auto; border: 2px solid #333; } 
-                h1, p { color: #333; text-align: center; font-family: sans-serif; }
-                .status-container { text-align: center; margin-top: 15px; }
-                .status-box { display: inline-block; background-color: #e0e0e0; color: #333; font-family: sans-serif; font-size: 1.1rem; padding: 10px 20px; border-radius: .5rem; border: 1px solid #333; font-weight: bold; }
+                body { margin: 0; font-family: sans-serif; background: #0e1117; color: #333; touch-action: manipulation; }
+                canvas { background: #f7f7f7; display: block; margin: auto; border: 2px solid #333; max-width: 100%; height: auto; } 
+                h1, p { text-align: center; margin: 5px 0; color: white; }
+                .game-container { position: relative; width: 600px; margin: auto; max-width: 100%; }
+                .overlay-msg { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); color: #ff3333; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid #ff3333; font-weight: bold; font-size: 1.2rem; width: 60%; box-sizing: border-box; }
+                .mobile-controls { display: flex; justify-content: center; gap: 20px; margin-top: 15px; }
+                .btn { background: #2b2b2b; color: white; border: 2px solid #555; border-radius: 10px; font-size: 1.2rem; font-weight: bold; width: 100px; height: 55px; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; }
+                .btn:active { background: #555; border-color: #fff; }
             </style>
-            <h1>🦖 Blob Run</h1><p id='score'>Score: 0</p>
-            <canvas id="game" width="600" height="150"></canvas>
-            <div class="status-container"><div id="status" class="status-box">🟢 Game Status: Active</div></div>
+            <h1>\ud83e\udd96 Blob Run</h1><p id='score'>Score: 0</p>
+            <div class="game-container">
+                <canvas id="game" width="600" height="150"></canvas>
+                <div id="overlay" class="overlay-msg">try again?</div>
+            </div>
+            <div class="mobile-controls">
+                <button class="btn" ontouchstart="handlePress('jump')" ontouchend="handleRelease('jump')" mousedown="handlePress('jump')" mouseup="handleRelease('jump')">\u25b2 JUMP</button>
+                <button class="btn" ontouchstart="handlePress('duck')" ontouchend="handleRelease('duck')" mousedown="handlePress('duck')" mouseup="handleRelease('duck')">\u25bc DUCK</button>
+            </div>
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
             let dino = {y: 130, vy: 0, w: 18, h: 22, isJumping: false, isDucking: false}; 
@@ -412,7 +507,7 @@ else:
 
                     if(o.x < dinoRight && o.x + o.w > dinoLeft && o.y < dinoBottom && o.y + o.h > dinoTop) {
                         gameRunning = false;
-                        document.getElementById('status').innerText = '💥 CRASH! Game Over! Restarting...';
+                        document.getElementById('overlay').style.display = 'block';
                         setTimeout(resetDinoGame, 2000);
                     }
                 });
@@ -422,47 +517,68 @@ else:
             function resetDinoGame() {
                 score = 0; obstacles = []; spawnObstacle();
                 dino.y = 130; dino.vy = 0; dino.isJumping = false; dino.isDucking = false;
-                document.getElementById('status').innerText = '🟢 Game Status: Active';
+                document.getElementById('overlay').style.display = 'none';
                 gameRunning = true;
                 loop();
             }
 
+            function handlePress(action) {
+                if(!gameRunning) return;
+                if(action === 'jump' && !dino.isJumping && !dino.isDucking) { dino.vy = -8.5; dino.isJumping = true; }
+                if(action === 'duck') { dino.isDucking = true; }
+            }
+            function handleRelease(action) {
+                if(action === 'duck') { dino.isDucking = false; }
+            }
+
             window.addEventListener('keydown', e => { 
                 const key = e.key.toLowerCase();
-                if([' ', 'arrowup', 'arrowdown', 'w', 's'].includes(key)) {
-                    e.preventDefault();
-                }
-                if((key===' ' || key==='arrowup' || key==='w') && !dino.isJumping && !dino.isDucking) { 
-                    dino.vy = -8.5; dino.isJumping = true; 
-                } 
-                if((key==='arrowdown' || key==='s')) { dino.isDucking = true; }
+                if([' ', 'arrowup', 'arrowdown', 'w', 's'].includes(key)) { e.preventDefault(); }
+                if(key===' ' || key==='arrowup' || key==='w') handlePress('jump');
+                if(key==='arrowdown' || key==='s') handlePress('duck');
             });
             window.addEventListener('keyup', e => {
                 const key = e.key.toLowerCase();
-                if(key==='arrowdown' || key==='s') { dino.isDucking = false; }
+                if(key==='arrowdown' || key==='s') handleRelease('duck');
             });
             loop();
             </script>
         """,
-        "🍕 Pac-Man": """
+        "\ud83c\udf55 Pac-Man": """
             <style>
-                canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; } 
-                h1, p { color: white; text-align: center; font-family: sans-serif; }
-                .status-container { text-align: center; margin-top: 15px; }
-                .status-box { display: inline-block; background-color: #2b2b2b; color: #ffff00; font-family: sans-serif; font-size: 1.1rem; padding: 10px 20px; border-radius: .5rem; border: 1px solid #ffff00; font-weight: bold; }
+                body { margin: 0; font-family: sans-serif; background: #0e1117; color: white; touch-action: manipulation; }
+                canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; max-width: 100%; height: auto; } 
+                h1, p { text-align: center; margin: 5px 0; }
+                .game-container { position: relative; width: 380px; margin: auto; max-width: 100%; }
+                .overlay-msg { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); color: #ffff00; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid #ffff00; font-weight: bold; font-size: 1.2rem; width: 80%; box-sizing: border-box; }
+                .mobile-controls { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 60px); gap: 10px; justify-content: center; margin-top: 15px; }
+                .btn { background: #2b2b2b; color: white; border: 2px solid #555; border-radius: 10px; font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; }
+                .btn:active { background: #ffff00; border-color: #fff; color: black; }
+                .up { grid-column: 2; grid-row: 1; }
+                .left { grid-column: 1; grid-row: 2; }
+                .right { grid-column: 3; grid-row: 2; }
+                .down { grid-column: 2; grid-row: 3; }
             </style>
-            <h1>🍕 Pac-Man Arcade</h1><p id='score'>Score: 0</p>
-            <canvas id="game" width="380" height="380"></canvas>
-            <div class="status-container"><div id="status" class="status-box">🟢 Game Status: Active</div></div>
+            <h1>\ud83c\udf55 Pac-Man Arcade</h1><p id='score'>Score: 0</p>
+            <div class="game-container">
+                <canvas id="game" width="380" height="380"></canvas>
+                <div id="overlay" class="overlay-msg">try again?</div>
+            </div>
+            <div class="mobile-controls">
+                <button class="btn up" onclick="handleBtn('up')">\u25b2</button>
+                <button class="btn left" onclick="handleBtn('left')">\u25c0</button>
+                <button class="btn right" onclick="handleBtn('right')">\u25b6</button>
+                <button class="btn down" onclick="handleBtn('down')">\u25bc</button>
+            </div>
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
             const tileSize = 20;
             let score = 0, gameRunning = true;
 
-            // Fully structured 19x19 classic layout array (1 = Wall, 0 = Pellet, 2 = Empty Path)
             let map = [
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                 [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+                [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
                 [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
                 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
                 [1,0,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,0,1],
@@ -477,20 +593,20 @@ else:
                 [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
                 [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
                 [1,0,0,1,0,0,0,0,0,2,0,0,0,0,0,1,0,0,1],
-                [1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1],
+                [1,1,0,1,0,1,2,1,1,1,1,1,2,1,0,1,0,1,1],
                 [1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
             ];
 
-            let pacman = { x: 9, y: 15, dx: 0, dy: 0, nextDx: 0, nextDy: 0 };
+            let pacman = { x: 9, y: 16, dx: 0, dy: 0, nextDx: 0, nextDy: 0 };
             let ghosts = [
-                { x: 9, y: 7, dx: 1, dy: 0, color: 'red' },
-                { x: 8, y: 9, dx: -1, dy: 0, color: 'pink' },
-                { x: 10, y: 9, dx: 1, dy: 0, color: 'cyan' }
+                { x: 9, y: 8, dx: 1, dy: 0, color: 'red' },
+                { x: 8, y: 10, dx: -1, dy: 0, color: 'pink' },
+                { x: 10, y: 10, dx: 1, dy: 0, color: 'cyan' }
             ];
 
             function isWall(gridX, gridY) {
-                if (gridX < 0 || gridX >= 19 || gridY < 0 || gridY >= 19) return false;
+                if (gridX < 0 || gridX >= 19 || gridY < 0 || gridY >= 20) return false;
                 return map[gridY][gridX] === 1;
             }
 
@@ -498,7 +614,7 @@ else:
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                for (let r = 0; r < 19; r++) {
+                for (let r = 0; r < 20; r++) {
                     for (let c = 0; c < 19; c++) {
                         if (map[r][c] === 1) {
                             ctx.fillStyle = '#1111b3';
@@ -584,7 +700,7 @@ else:
 
                     if (g.x === pacman.x && g.y === pacman.y) {
                         gameRunning = false;
-                        document.getElementById('status').innerText = '💥 Game Over! Caught by ghosts. Restarting...';
+                        document.getElementById('overlay').style.display = 'block';
                         setTimeout(resetPacman, 2500);
                     }
                 });
@@ -596,16 +712,16 @@ else:
             function resetPacman() {
                 score = 0;
                 document.getElementById('score').innerText = 'Score: ' + score;
-                document.getElementById('status').innerText = '🟢 Game Status: Active';
-                pacman = { x: 9, y: 15, dx: 0, dy: 0, nextDx: 0, nextDy: 0 };
+                document.getElementById('overlay').style.display = 'none';
+                pacman = { x: 9, y: 16, dx: 0, dy: 0, nextDx: 0, nextDy: 0 };
                 ghosts = [
-                    { x: 9, y: 7, dx: 1, dy: 0, color: 'red' },
-                    { x: 8, y: 9, dx: -1, dy: 0, color: 'pink' },
-                    { x: 10, y: 9, dx: 1, dy: 0, color: 'cyan' }
+                    { x: 9, y: 8, dx: 1, dy: 0, color: 'red' },
+                    { x: 8, y: 10, dx: -1, dy: 0, color: 'pink' },
+                    { x: 10, y: 10, dx: 1, dy: 0, color: 'cyan' }
                 ];
-                for (let r = 0; r < 19; r++) {
+                for (let r = 0; r < 20; r++) {
                     for (let c = 0; c < 19; c++) {
-                        if (map[r][c] === 2 && (r !== 15 || c !== 9)) {
+                        if (map[r][c] === 2 && (r !== 16 || c !== 9)) {
                             map[r][c] = 0;
                         }
                     }
@@ -614,15 +730,23 @@ else:
                 draw();
             }
 
+            function handleBtn(dir) {
+                if (!gameRunning) return;
+                if (dir === 'up') { pacman.nextDx = 0; pacman.nextDy = -1; }
+                if (dir === 'down') { pacman.nextDx = 0; pacman.nextDy = 1; }
+                if (dir === 'left') { pacman.nextDx = -1; pacman.nextDy = 0; }
+                if (dir === 'right') { pacman.nextDx = 1; pacman.nextDy = 0; }
+            }
+
             window.addEventListener('keydown', e => {
                 const key = e.key.toLowerCase();
                 if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 's', 'a', 'd'].includes(key)) {
                     e.preventDefault();
                 }
-                if (key === 'arrowup' || key === 'w') { pacman.nextDx = 0; pacman.nextDy = -1; }
-                if (key === 'arrowdown' || key === 's') { pacman.nextDx = 0; pacman.nextDy = 1; }
-                if (key === 'arrowleft' || key === 'a') { pacman.nextDx = -1; pacman.nextDy = 0; }
-                if (key === 'arrowright' || key === 'd') { pacman.nextDx = 1; pacman.nextDy = 0; }
+                if (key === 'arrowup' || key === 'w') handleBtn('up');
+                if (key === 'arrowdown' || key === 's') handleBtn('down');
+                if (key === 'arrowleft' || key === 'a') handleBtn('left');
+                if (key === 'arrowright' || key === 'd') handleBtn('right');
             });
 
             draw();
@@ -631,6 +755,7 @@ else:
         """
     }
 
+    # Format internal key dictionary string match safely
     cleaned_mode = app_mode.strip()
     st.title(app_mode)
-    components.html(games[cleaned_mode], height=560)
+    components.html(games[cleaned_mode], height=650)
