@@ -758,4 +758,4 @@ else:
     # Format internal key dictionary string match safely
     cleaned_mode = app_mode.strip()
     st.title(app_mode)
-  
+        components.html(games[cleaned_mode], height=650)
