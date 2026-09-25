@@ -452,9 +452,8 @@ elif app_mode == "🕹️Tetris":
         st.rerun()
 
 
-
 # -------------------------------------------------------------
-# PAGE 5: PLAYABLE PAC-MAN (FOUR CIRCLE GHOSTS)
+# PAGE 5: PLAYABLE PAC-MAN
 # -------------------------------------------------------------
 elif app_mode == "🍕 Pac-Man":
     st.title("🍕 Pac-Man")
@@ -467,29 +466,28 @@ elif app_mode == "🍕 Pac-Man":
         "ArrowRight": "Right", "d": "Right", "D": "Right"
     })
 
-    # Fixed 9x9 Maze Layout Grid (1 = Wall, 0 = Open Path with Dot)
     PAC_MAZE = [
- ,
- ,
- ,
- ,
- ,
- ,
- ,
+        [1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 1, 1, 0, 1, 0, 1, 1, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1]
     ]
     M_ROWS, M_COLS = 9, 9
 
-    # Game State Session Engine Initializer
     if 'pac_x' not in st.session_state:
         st.session_state.pac_x = 1
         st.session_state.pac_y = 1
-        st.session_state.pac_face = "😮"  # Dynamic tracking face
+        st.session_state.pac_face = "😮"
         st.session_state.ghosts = [
-            {"x": 7, "y": 7, "icon": "🔴", "type": "blinky"},  # Blinky: Red Circle
-            {"x": 1, "y": 7, "icon": "🌸", "type": "pinky"},   # Pinky: Pink Circle/Flower
-            {"x": 7, "y": 1, "icon": "🔵", "type": "inky"},    # Inky: Blue Circle
-            {"x": 3, "y": 3, "icon": "🟠", "type": "clyde"}    # Clyde: Orange Circle
+            {"x": 7, "y": 7, "icon": "🔴", "type": "blinky"},
+            {"x": 1, "y": 7, "icon": "🌸", "type": "pinky"},
+            {"x": 7, "y": 1, "icon": "🔵", "type": "inky"},
+            {"x": 3, "y": 3, "icon": "🟠", "type": "clyde"}
         ]
         st.session_state.dots = [(r, c) for r in range(M_ROWS) for c in range(M_COLS) if PAC_MAZE[r][c] == 0]
         st.session_state.pac_score = 0
@@ -515,37 +513,31 @@ elif app_mode == "🍕 Pac-Man":
         if st.session_state.pac_game_over or st.session_state.pac_victory:
             return
 
-        # 1. Animate Pac-Man's Face based on movement direction
         if direction in ["UP", "DOWN"]:
             st.session_state.pac_face = "😲" if st.session_state.pac_face == "😮" else "😮"
         elif direction in ["LEFT", "RIGHT"]:
             st.session_state.pac_face = "😋" if st.session_state.pac_face == "😮" else "😮"
 
-        # 2. Process Pac-Man Movement
         next_x, next_y = st.session_state.pac_x, st.session_state.pac_y
         if direction == "UP": next_y -= 1
         elif direction == "DOWN": next_y += 1
         elif direction == "LEFT": next_x -= 1
         elif direction == "RIGHT": next_x += 1
 
-        # Move if destination path is open
         if 0 <= next_y < M_ROWS and 0 <= next_x < M_COLS:
             if PAC_MAZE[next_y][next_x] != 1:
                 st.session_state.pac_x = next_x
                 st.session_state.pac_y = next_y
 
-        # Score pellet ingestion mapping
         current_loc = (st.session_state.pac_y, st.session_state.pac_x)
         if current_loc in st.session_state.dots:
             st.session_state.dots.remove(current_loc)
             st.session_state.pac_score += 10
 
-        # Victory check
         if len(st.session_state.dots) == 0:
             st.session_state.pac_victory = True
             return
 
-        # 3. Process Ghost Personalities AI Engine
         px, py = st.session_state.pac_x, st.session_state.pac_y
         for ghost in st.session_state.ghosts:
             gx, gy = ghost["x"], ghost["y"]
@@ -558,32 +550,26 @@ elif app_mode == "🍕 Pac-Man":
 
             if possible_moves:
                 if ghost["type"] == "blinky":
-                    # Directly chases Pac-Man position
                     best_move = min(possible_moves, key=lambda m: abs(m[0]-px) + abs(m[1]-py))
                 elif ghost["type"] == "pinky":
-                    # Tries to ambush 2 steps ahead of Pac-Man direction
                     target_x = px + 2 if direction == "RIGHT" else (px - 2 if direction == "LEFT" else px)
                     target_y = py + 2 if direction == "DOWN" else (py - 2 if direction == "UP" else py)
                     best_move = min(possible_moves, key=lambda m: abs(m[0]-target_x) + abs(m[1]-target_y))
                 elif ghost["type"] == "clyde":
-                    # Chases if far away, runs to bottom-left corner if closer than 4 spaces
                     dist = abs(gx-px) + abs(gy-py)
                     if dist > 4:
                         best_move = min(possible_moves, key=lambda m: abs(m[0]-px) + abs(m[1]-py))
                     else:
                         best_move = min(possible_moves, key=lambda m: abs(m[0]-1) + abs(m[1]-7))
                 else:
-                    # Inky: Random selection
                     best_move = random.choice(possible_moves)
 
                 ghost["x"], ghost["y"] = best_move[0], best_move[1]
 
-        # Post-movement game over impact collision check
         for ghost in st.session_state.ghosts:
             if ghost["x"] == st.session_state.pac_x and ghost["y"] == st.session_state.pac_y:
                 st.session_state.pac_game_over = True
 
-    # Render Visual Layer Blocks
     grid_placeholder = st.empty()
     score_placeholder = st.empty()
     controls_placeholder = st.empty()
@@ -603,26 +589,22 @@ elif app_mode == "🍕 Pac-Man":
             if st.button("Play Again", key="pac_retry_win"):
                 reset_pacman(); st.rerun()
     else:
-        # Construct current frame layer grid
         display_grid = [["🟦" if cell == 1 else "🔸" for cell in row] for row in PAC_MAZE]
         
-        # Erase dots from map layer if consumed
         for r in range(M_ROWS):
             for c in range(M_COLS):
                 if PAC_MAZE[r][c] == 0 and (r, c) not in st.session_state.dots:
                     display_grid[r][c] = "⬛"
 
-        # Overlay active target sprites safely
         for ghost in st.session_state.ghosts:
             display_grid[ghost["y"]][ghost["x"]] = ghost["icon"]
             
-        # Draw Pac-Man on top layer
         display_grid[st.session_state.pac_y][st.session_state.pac_x] = st.session_state.pac_face
 
-        grid_placeholder.text("\n".join([" ".join(row) for row in display_grid]))
+        grid_string = "\n".join([" ".join(row) for row in display_grid])
+        grid_placeholder.text(grid_string)
         score_placeholder.write(f"🏆 Score: **{st.session_state.pac_score}** | 🔸 Remaining Pellets: **{len(st.session_state.dots)}**")
 
-        # Static D-Pad Control Dashboard
         with controls_placeholder:
             st.write("--- Controls ---")
             p_col1, p_col2, p_col3 = st.columns(3)
