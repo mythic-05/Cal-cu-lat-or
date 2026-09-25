@@ -9,7 +9,7 @@ st.set_page_config(page_title="Web Arcade", layout="centered")
 st.sidebar.title(" Applications ")
 app_mode = st.sidebar.radio(
     "Choose a tool to load:",
-    ["🔢 Calculator", "🐍 Snake", "🟓 Pong", "🕹️Tetris", "🦖 T-Rex Run"]
+    ["🔢 Calculator", "🐍 Snake", "🟓 Pong", "🕹️Tetris", "🦖 Blob Run"]
 )
 
 # -------------------------------------------------------------
@@ -127,6 +127,10 @@ else:
             }
             window.addEventListener('keydown', e => {
                 const key = e.key.toLowerCase();
+                // Block native window scrolling actions
+                if(['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) {
+                    e.preventDefault();
+                }
                 if((e.key==='ArrowUp' || key==='w') && dy===0){dx=0;dy=-grid;}
                 if((e.key==='ArrowDown' || key==='s') && dy===0){dx=0;dy=grid;}
                 if((e.key==='ArrowLeft' || key==='a') && dx===0){dx=-grid;dy=0;}
@@ -140,12 +144,14 @@ else:
                 canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; } 
                 h1, p { color: white; text-align: center; font-family: sans-serif; }
             </style>
-            <h1>🟓 Pong Match</h1><p>Left (W/S) | Right (Up/Down)</p>
+            <h1>🟓 Pong Match</h1>
+            <p id="score-board">Left Player: 0 | Right Player: 0</p>
             <canvas id="game" width="600" height="400"></canvas>
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
             let leftPaddle = {x: 10, y: 150, w: 10, h: 80}, rightPaddle = {x: 580, y: 150, w: 10, h: 80};
             let ball = {x: 300, y: 200, r: 7, vx: 4, vy: 4};
+            let leftScore = 0, rightScore = 0;
             let keys = {};
 
             function loop() {
@@ -162,7 +168,15 @@ else:
                 if(ball.x <= leftPaddle.x + leftPaddle.w && ball.y >= leftPaddle.y && ball.y <= leftPaddle.y + leftPaddle.h) { ball.vx = Math.abs(ball.vx) + 0.2; }
                 if(ball.x >= rightPaddle.x - ball.r && ball.y >= rightPaddle.y && ball.y <= rightPaddle.y + rightPaddle.h) { ball.vx = -Math.abs(ball.vx) - 0.2; }
 
-                if(ball.x < 0 || ball.x > 600) { ball.x = 300; ball.y = 200; ball.vx = ball.vx > 0 ? -4 : 4; }
+                if(ball.x < 0) {
+                    rightScore++;
+                    updateScoreBoard();
+                    resetBall();
+                } else if(ball.x > 600) {
+                    leftScore++;
+                    updateScoreBoard();
+                    resetBall();
+                }
 
                 ctx.fillStyle = 'white';
                 ctx.fillRect(leftPaddle.x, leftPaddle.y, leftPaddle.w, leftPaddle.h);
@@ -171,7 +185,23 @@ else:
 
                 requestAnimationFrame(loop);
             }
-            window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+            
+            function updateScoreBoard() {
+                document.getElementById('score-board').innerText = `Left Player: ${leftScore} | Right Player: ${rightScore}`;
+            }
+            
+            function resetBall() {
+                ball.x = 300; ball.y = 200; 
+                ball.vx = ball.vx > 0 ? -4 : 4;
+                ball.vy = Math.random() > 0.5 ? 4 : -4;
+            }
+
+            window.addEventListener('keydown', e => {
+                if(['arrowup', 'arrowdown', 'w', 's'].includes(e.key.toLowerCase())) {
+                    e.preventDefault();
+                }
+                keys[e.key.toLowerCase()] = true;
+            });
             window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
             loop();
             </script>
@@ -264,7 +294,6 @@ else:
                 player.colorId = SHAPES.indexOf(char) + 1;
                 player.pos.y = 0;
                 player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
-                
                 if (collide(arena, player)) { 
                     gameRunning = false;
                     document.getElementById('status').innerText = '❌ Game Over! Resetting...';
@@ -308,6 +337,9 @@ else:
             window.addEventListener('keydown', e => {
                 if (!gameRunning) return;
                 const key = e.key.toLowerCase();
+                if(['arrowleft', 'arrowright', 'arrowdown', 'a', 'd', 's', ' '].includes(key)) {
+                    e.preventDefault();
+                }
                 if(key==='arrowleft' || key==='a') { player.pos.x--; if(collide(arena, player)) player.pos.x++; }
                 if(key==='arrowright' || key==='d') { player.pos.x++; if(collide(arena, player)) player.pos.x--; }
                 if(key==='arrowdown' || key==='s') { playerDrop(); }
@@ -319,14 +351,14 @@ else:
             playerReset(); update();
             </script>
         """,
-        "🦖 T-Rex Run": """
+        "🦖 Blob Run": """
             <style>
                 canvas { background: #f7f7f7; display: block; margin: auto; border: 2px solid #333; } 
                 h1, p { color: #333; text-align: center; font-family: sans-serif; }
                 .status-container { text-align: center; margin-top: 15px; }
                 .status-box { display: inline-block; background-color: #e0e0e0; color: #333; font-family: sans-serif; font-size: 1.1rem; padding: 10px 20px; border-radius: .5rem; border: 1px solid #333; font-weight: bold; }
             </style>
-            <h1>🦖 T-Rex Run</h1><p id='score'>Score: 0</p>
+            <h1>🦖 Blob Run</h1><p id='score'>Score: 0</p>
             <canvas id="game" width="600" height="150"></canvas>
             <div class="status-container"><div id="status" class="status-box">🟢 Game Status: Active</div></div>
             <script>
@@ -362,7 +394,7 @@ else:
                     ctx.fillRect(50, dino.y-dino.h, dino.w, dino.h); 
                     ctx.fillRect(50 + dino.w, dino.y-dino.h, 6, 8); 
                     ctx.fillStyle = 'white'; ctx.fillRect(50 + dino.w + 2, dino.y-dino.h + 2, 2, 2); 
-                    ctx.fillStyle = '#333'; ctx.fillRect(53, dino.y, 3, 5); ctx.fillRect(61, dino.y, 3, 5); 
+                    ctx.fillStyle = '#333'; ctx.fillRect(54, dino.y, 3, 5); ctx.fillRect(61, dino.y, 3, 5); 
                 }
 
                 if(Math.random() < 0.01 && (obstacles.length === 0 || obstacles[obstacles.length-1].x < 420)) spawnObstacle();
@@ -398,6 +430,9 @@ else:
 
             window.addEventListener('keydown', e => { 
                 const key = e.key.toLowerCase();
+                if([' ', 'arrowup', 'arrowdown', 'w', 's'].includes(key)) {
+                    e.preventDefault();
+                }
                 if((key===' ' || key==='arrowup' || key==='w') && !dino.isJumping && !dino.isDucking) { 
                     dino.vy = -8.5; dino.isJumping = true; 
                 } 
