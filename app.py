@@ -1,6 +1,5 @@
 import streamlit as st
 import time
-import random
 import streamlit.components.v1 as components
 
 # --- APP CONFIGURATION & NAVIGATION ---
@@ -72,48 +71,57 @@ else:
     games = {
         "🐍 Snake": """
             <style>
-                body { margin: 0; padding: 0; font-family: sans-serif; background: #111; color: white; touch-action: manipulation; }
-                canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; max-width: 100%; height: auto; } 
-                h1, p { text-align: center; margin: 5px 0; }
-                .game-container { position: relative; width: 400px; max-width: 100%; margin: auto; }
-                .overlay { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); color: #ff4b4b; padding: 20px; text-align: center; border-radius: 10px; border: 2px solid #ff4b4b; font-size: 1.5rem; font-weight: bold; width: 80%; z-index: 10; }
-                .overlay p { font-size: 1rem; color: #fff; margin-top: 10px; font-weight: normal; }
-                .mobile-controls { display: grid; grid-template-columns: repeat(3, 1fr); width: 200px; margin: 15px auto; gap: 10px; }
-                .btn { background: #333; color: white; border: 2px solid #fff; padding: 15px; text-align: center; font-size: 1.2rem; border-radius: 8px; user-select: none; cursor: pointer; }
-                .btn:active { background: #555; }
-                .spacer { visibility: hidden; }
+                body { margin: 0; background: #000; font-family: sans-serif; color: white; text-align: center; }
+                .game-container { position: relative; width: 400px; margin: auto; }
+                canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; } 
+                h1, p { margin: 10px 0; }
+                .overlay {
+                    display: none; position: absolute; top: 50px; left: 4px; width: 400px; height: 400px;
+                    background: rgba(0, 0, 0, 0.85); color: #ff4b4b; flex-direction: column;
+                    justify-content: center; align-items: center; font-size: 2rem; font-weight: bold;
+                }
+                .trash-talk { font-size: 1.1rem; color: #aaa; margin-top: 10px; font-style: italic; padding: 0 20px; }
+                .mobile-controls { display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(3, 70px); gap: 10px; justify-content: center; margin-top: 15px; }
+                .btn { background: #222; border: 2px solid #fff; color: white; font-size: 1.5rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; user-select: none; touch-action: manipulation; }
+                .btn:active { background: #444; }
+                .empty { visibility: hidden; }
             </style>
-            <h1>🐍 Snake Game</h1><p id='score'>Score: 0</p>
+            <h1>🐍 Snake Game</h1>
+            <p id='score'>Score: 0</p>
             <div class="game-container">
-                <div id="overlay" class="overlay">try again?<p id="insult"></p></div>
                 <canvas id="game" width="400" height="400"></canvas>
+                <div id="overlay" class="overlay">
+                    <div>try again?</div>
+                    <div id="trash" class="trash-talk"></div>
+                </div>
             </div>
+            
             <div class="mobile-controls">
-                <div class="spacer"></div><div class="btn" id="btn-up">▲</div><div class="spacer"></div>
-                <div class="btn" id="btn-left">◀</div><div class="spacer"></div><div class="btn" id="btn-right">▶</div>
-                <div class="spacer"></div><div class="btn" id="btn-down">▼</div><div class="spacer"></div>
+                <div class="empty"></div><div class="btn" id="btn-up">▲</div><div class="empty"></div>
+                <div class="btn" id="btn-left">◀</div><div class="empty"></div><div class="btn" id="btn-right">▶</div>
+                <div class="empty"></div><div class="btn" id="btn-down">▼</div><div class="empty"></div>
             </div>
+
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+            const overlay = document.getElementById('overlay'), trashBox = document.getElementById('trash');
             let grid = 20, score = 0, gameRunning = true;
             let snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
             let dx = grid, dy = 0;
             let food = {x: 80, y: 80};
 
+            const edgeInsults = ["Maybe pay attention next time?", "Hey idiot, the apple's over there.", "Imagine losing in a snake game lmfao"];
+            const selfInsults = ["Maybe don't hit yourself", "Stop hitting yourself stop hitting yourself", "Hey idiot, the apple's over there.", "Imagine losing in a snake game lmfao"];
+
             function main() {
                 if (!gameRunning) return;
-                let cause = gameOver();
-                if (cause) {
+                let reason = checkGameOver();
+                if (reason) {
                     gameRunning = false;
-                    document.getElementById('overlay').style.display = 'block';
+                    overlay.style.display = 'flex';
                     
-                    let lines = ["Hey idiot, the apple's over there.", "Nice one!", "Imagine losing in a snake game lmfao"];
-                    if (cause === 'edge') lines.push("Maybe pay attention next time?");
-                    if (cause === 'self') {
-                        lines.push("Maybe don't hit yourself");
-                        lines.push("Stop hitting yourself stop hitting yourself");
-                    }
-                    document.getElementById('insult').innerText = lines[Math.floor(Math.random() * lines.length)];
+                    let lines = reason === 'wall' ? edgeInsults : selfInsults;
+                    trashBox.innerText = lines[Math.floor(Math.random() * lines.length)];
                     
                     setTimeout(resetGame, 3000);
                     return;
@@ -124,8 +132,8 @@ else:
                 snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
                 dx = grid; dy = 0; score = 0;
                 document.getElementById('score').innerText = 'Score: ' + score;
-                document.getElementById('overlay').style.display = 'none';
-                food = {x: Math.floor(Math.random()*19)*grid, y: Math.floor(Math.random()*19)*grid};
+                overlay.style.display = 'none';
+                food = {x: Math.floor(Math.random()*20)*grid, y: Math.floor(Math.random()*20)*grid};
                 gameRunning = true;
                 main();
             }
@@ -139,52 +147,66 @@ else:
                     food = {x: Math.floor(Math.random()*20)*grid, y: Math.floor(Math.random()*20)*grid};
                 } else snake.pop();
             }
-            function gameOver() {
+            function checkGameOver() {
                 const h = snake[0];
-                if (h.x < 0 || h.x >= canvas.width || h.y < 0 || h.y >= canvas.height) return 'edge';
+                if (h.x < 0 || h.x >= canvas.width || h.y < 0 || h.y >= canvas.height) return 'wall';
                 for(let i = 1; i < snake.length; i++) {
                     if(snake[i].x === h.x && snake[i].y === h.y) return 'self';
                 }
                 return null;
             }
+            
             function handleInput(dir) {
+                if (!gameRunning) return;
                 if(dir === 'up' && dy === 0) { dx = 0; dy = -grid; }
                 if(dir === 'down' && dy === 0) { dx = 0; dy = grid; }
                 if(dir === 'left' && dx === 0) { dx = -grid; dy = 0; }
                 if(dir === 'right' && dx === 0) { dx = grid; dy = 0; }
             }
+
             window.addEventListener('keydown', e => {
                 const key = e.key.toLowerCase();
                 if(['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) e.preventDefault();
-                if(e.key==='ArrowUp' || key==='w') handleInput('up');
-                if(e.key==='ArrowDown' || key==='s') handleInput('down');
-                if(e.key==='ArrowLeft' || key==='a') handleInput('left');
-                if(e.key==='ArrowRight' || key==='d') handleInput('right');
+                if(key==='arrowup' || key==='w') handleInput('up');
+                if(key==='arrowdown' || key==='s') handleInput('down');
+                if(key==='arrowleft' || key==='a') handleInput('left');
+                if(key==='arrowright' || key==='d') handleInput('right');
             });
-            document.getElementById('btn-up').addEventListener('touchstart', e => { e.preventDefault(); handleInput('up'); });
-            document.getElementById('btn-down').addEventListener('touchstart', e => { e.preventDefault(); handleInput('down'); });
-            document.getElementById('btn-left').addEventListener('touchstart', e => { e.preventDefault(); handleInput('left'); });
-            document.getElementById('btn-right').addEventListener('touchstart', e => { e.preventDefault(); handleInput('right'); });
+
+            document.getElementById('btn-up').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('up'); });
+            document.getElementById('btn-down').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('down'); });
+            document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('left'); });
+            document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('right'); });
+            document.getElementById('btn-up').addEventListener('click', () => handleInput('up'));
+            document.getElementById('btn-down').addEventListener('click', () => handleInput('down'));
+            document.getElementById('btn-left').addEventListener('click', () => handleInput('left'));
+            document.getElementById('btn-right').addEventListener('click', () => handleInput('right'));
             main();
             </script>
         """,
         "🟓 Pong": """
             <style>
-                body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: white; touch-action: none; }
-                canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; max-width: 100%; height: auto; } 
-                h1, p { text-align: center; }
-                .pong-layout { position: relative; display: flex; width: 600px; max-width: 100%; margin: auto; }
-                .touch-zone { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 5; }
-                #left-zone { left: 0; }
-                #right-zone { right: 0; }
+                body { margin:0; background:#000; font-family:sans-serif; color:white; text-align:center; }
+                canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; } 
+                .pong-controls { display: flex; width: 600px; margin: 15px auto; justify-content: space-between; }
+                .side-ctrl { display: flex; flex-direction: column; gap: 10px; }
+                .btn { width: 100px; height: 60px; background: #222; border: 2px solid #fff; color: white; font-size: 1.2rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; user-select: none; }
             </style>
             <h1>🟓 Pong Match</h1>
             <p id="score-board">Left Player: 0 | Right Player: 0</p>
-            <div class="pong-layout">
-                <div id="left-zone" class="touch-zone"></div>
-                <div id="right-zone" class="touch-zone"></div>
-                <canvas id="game" width="600" height="400"></canvas>
+            <canvas id="game" width="600" height="400"></canvas>
+            
+            <div class="pong-controls">
+                <div class="side-ctrl">
+                    <div class="btn" id="p1-up">W (Up)</div>
+                    <div class="btn" id="p1-down">S (Down)</div>
+                </div>
+                <div class="side-ctrl">
+                    <div class="btn" id="p2-up">▲ (Up)</div>
+                    <div class="btn" id="p2-down">▼ (Down)</div>
+                </div>
             </div>
+
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
             let leftPaddle = {x: 10, y: 150, w: 10, h: 80}, rightPaddle = {x: 580, y: 150, w: 10, h: 80};
@@ -195,10 +217,10 @@ else:
             function loop() {
                 ctx.clearRect(0, 0, 600, 400);
                 
-                if (keys['w']) leftPaddle.y = Math.max(0, leftPaddle.y - 6);
-                if (keys['s']) leftPaddle.y = Math.min(320, leftPaddle.y + 6);
-                if (keys['arrowup']) rightPaddle.y = Math.max(0, rightPaddle.y - 6);
-                if (keys['arrowdown']) rightPaddle.y = Math.min(320, rightPaddle.y + 6);
+                if (keys['w'] || keys['p1up']) leftPaddle.y = Math.max(0, leftPaddle.y - 6);
+                if (keys['s'] || keys['p1down']) leftPaddle.y = Math.min(320, leftPaddle.y + 6);
+                if (keys['arrowup'] || keys['p2up']) rightPaddle.y = Math.max(0, rightPaddle.y - 6);
+                if (keys['arrowdown'] || keys['p2down']) rightPaddle.y = Math.min(320, rightPaddle.y + 6);
 
                 ball.x += ball.vx; ball.y += ball.vy;
                 if(ball.y <= 0 || ball.y >= 400) ball.vy *= -1;
@@ -233,49 +255,49 @@ else:
             });
             window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-            function handleTouch(e, zone) {
-                e.preventDefault();
-                let rect = canvas.getBoundingClientRect();
-                for (let touch of e.touches) {
-                    let clientX = touch.clientX - rect.left;
-                    let clientY = touch.clientY - rect.top;
-                    let canvasY = clientY * (400 / rect.height);
-                    if(zone === 'left' && touch.clientX < window.innerWidth/2) leftPaddle.y = Math.min(320, Math.max(0, canvasY - 40));
-                    if(zone === 'right' && touch.clientX >= window.innerWidth/2) rightPaddle.y = Math.min(320, Math.max(0, canvasY - 40));
-                }
-            }
-            document.getElementById('left-zone').addEventListener('touchmove', e => handleTouch(e, 'left'));
-            document.getElementById('left-zone').addEventListener('touchstart', e => handleTouch(e, 'left'));
-            document.getElementById('right-zone').addEventListener('touchmove', e => handleTouch(e, 'right'));
-            document.getElementById('right-zone').addEventListener('touchstart', e => handleTouch(e, 'right'));
+            const setupTouch = (id, keyOn, keyOff) => {
+                const el = document.getElementById(id);
+                el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyOn] = true; });
+                el.addEventListener('touchend', () => keys[keyOn] = false);
+                el.addEventListener('mousedown', () => keys[keyOn] = true);
+                el.addEventListener('mouseup', () => keys[keyOn] = false);
+            };
+            setupTouch('p1-up', 'p1up'), setupTouch('p1-down', 'p1down');
+            setupTouch('p2-up', 'p2up'), setupTouch('p2-down', 'p2down');
 
             loop();
             </script>
         """,
         "🕹️Tetris": """
             <style>
-                body { margin: 0; padding: 0; font-family: sans-serif; background: #111; color: white; touch-action: manipulation; }
-                canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; max-width: 100%; height: auto; } 
-                h1, p { text-align: center; margin: 5px 0; }
-                .game-container { position: relative; width: 240px; max-width: 100%; margin: auto; }
-                .overlay { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); color: #00d2ff; padding: 20px; text-align: center; border-radius: 10px; border: 2px solid #00d2ff; font-size: 1.5rem; font-weight: bold; width: 80%; z-index: 10; }
-                .mobile-controls { display: grid; grid-template-columns: repeat(4, 1fr); width: 240px; margin: 15px auto; gap: 8px; }
-                .btn { background: #333; color: white; border: 2px solid #fff; padding: 12px 5px; text-align: center; font-size: 1rem; border-radius: 8px; user-select: none; cursor: pointer; }
-                .btn:active { background: #555; }
+                body { margin:0; background:#000; font-family:sans-serif; color:white; text-align:center; }
+                .game-container { position: relative; width: 240px; margin: auto; }
+                canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; } 
+                h1, p { margin: 10px 0; }
+                .overlay {
+                    display: none; position: absolute; top: 0; left: 4px; width: 240px; height: 400px;
+                    background: rgba(0, 0, 0, 0.85); color: #00d2ff; flex-direction: column;
+                    justify-content: center; align-items: center; font-size: 1.8rem; font-weight: bold;
+                }
+                .mobile-controls { display: grid; grid-template-columns: repeat(3, 65px); grid-template-rows: repeat(2, 60px); gap: 10px; justify-content: center; margin-top: 15px; }
+                .btn { background: #222; border: 2px solid #fff; color: white; font-size: 1.2rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; user-select: none; touch-action: manipulation; }
+                .btn:active { background: #444; }
+                .empty { visibility: hidden; }
             </style>
             <h1>🕹️ Tetris</h1><p id='score'>Score: 0</p>
             <div class="game-container">
-                <div id="overlay" class="overlay">try again?</div>
                 <canvas id="game" width="240" height="400"></canvas>
+                <div id="overlay" class="overlay">try again?</div>
             </div>
+            
             <div class="mobile-controls">
-                <div class="btn" id="btn-left">◀</div>
-                <div class="btn" id="btn-rot">🔄</div>
-                <div class="btn" id="btn-drop">▼</div>
-                <div class="btn" id="btn-right">▶</div>
+                <div class="btn" id="t-left">◀</div><div class="btn" id="t-rot">🔄</div><div class="btn" id="t-right">▶</div>
+                <div class="empty"></div><div class="btn" id="t-down">▼</div><div class="empty"></div>
             </div>
+
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+            const overlay = document.getElementById('overlay');
             ctx.scale(20, 20);
             
             const arena = Array(20).fill().map(() => Array(12).fill(0));
@@ -335,8 +357,7 @@ else:
                     if (full) {
                         arena.splice(y, 1);
                         arena.unshift(Array(12).fill(0));
-                        y++; 
-                        rowsCleared++;
+                        y++; rowsCleared++;
                     }
                 }
                 if (rowsCleared > 0) {
@@ -346,20 +367,19 @@ else:
             }
 
             function playerReset() {
-                const pieces = SHAPES;
-                const char = pieces[pieces.length * Math.random() | 0];
+                const char = SHAPES[SHAPES.length * Math.random() | 0];
                 player.matrix = createPiece(char);
                 player.colorId = SHAPES.indexOf(char) + 1;
                 player.pos.y = 0;
                 player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
                 if (collide(arena, player)) { 
                     gameRunning = false;
-                    document.getElementById('overlay').style.display = 'block';
+                    overlay.style.display = 'flex';
                     setTimeout(() => {
                         arena.forEach(row => row.fill(0)); 
                         score = 0; 
                         document.getElementById('score').innerText = 'Score: ' + score;
-                        document.getElementById('overlay').style.display = 'none';
+                        overlay.style.display = 'none';
                         gameRunning = true;
                         playerReset();
                     }, 2500);
@@ -370,10 +390,7 @@ else:
                 if (!gameRunning) return;
                 player.pos.y++;
                 if (collide(arena, player)) {
-                    player.pos.y--; 
-                    merge(arena, player); 
-                    arenaSweep();
-                    playerReset(); 
+                    player.pos.y--; merge(arena, player); arenaSweep(); playerReset(); 
                 }
                 dropCounter = 0;
             }
@@ -381,9 +398,7 @@ else:
             function playerRotate() {
                 if (!gameRunning) return;
                 rotate(player.matrix);
-                if (collide(arena, player)) {
-                    rotate(player.matrix); rotate(player.matrix); rotate(player.matrix);
-                }
+                if (collide(arena, player)) { rotate(player.matrix); rotate(player.matrix); rotate(player.matrix); }
             }
 
             function rotate(matrix) {
@@ -400,11 +415,10 @@ else:
                 draw(); requestAnimationFrame(update); 
             }
 
-            function moveLeft() { if(gameRunning) { player.pos.x--; if(collide(arena, player)) player.pos.x++; } }
-            function moveRight() { if(gameRunning) { player.pos.x++; if(collide(arena, player)) player.pos.x--; } }
+            function moveLeft() { if(!gameRunning)return; player.pos.x--; if(collide(arena, player)) player.pos.x++; }
+            function moveRight() { if(!gameRunning)return; player.pos.x++; if(collide(arena, player)) player.pos.x--; }
 
             window.addEventListener('keydown', e => {
-                if (!gameRunning) return;
                 const key = e.key.toLowerCase();
                 if(['arrowleft', 'arrowright', 'arrowdown', 'a', 'd', 's', ' '].includes(key)) e.preventDefault();
                 if(key==='arrowleft' || key==='a') moveLeft();
@@ -413,36 +427,46 @@ else:
                 if(e.key===' ') playerRotate();
             });
 
-            document.getElementById('btn-left').addEventListener('touchstart', e => { e.preventDefault(); moveLeft(); });
-            document.getElementById('btn-right').addEventListener('touchstart', e => { e.preventDefault(); moveRight(); });
-            document.getElementById('btn-drop').addEventListener('touchstart', e => { e.preventDefault(); playerDrop(); });
-            document.getElementById('btn-rot').addEventListener('touchstart', e => { e.preventDefault(); playerRotate(); });
+            const bindBtn = (id, fn) => {
+                const el = document.getElementById(id);
+                el.addEventListener('touchstart', (e) => { e.preventDefault(); fn(); });
+                el.addEventListener('click', fn);
+            };
+            bindBtn('t-left', moveLeft); bindBtn('t-right', moveRight);
+            bindBtn('t-down', playerDrop); bindBtn('t-rot', playerRotate);
 
             playerReset(); update();
             </script>
         """,
         "🦖 Blob Run": """
             <style>
-                body { margin: 0; padding: 0; font-family: sans-serif; background: #fff; color: #333; touch-action: manipulation; }
-                canvas { background: #f7f7f7; display: block; margin: auto; border: 2px solid #333; max-width: 100%; height: auto; } 
-                h1, p { text-align: center; margin: 5px 0; }
-                .game-container { position: relative; width: 600px; max-width: 100%; margin: auto; }
-                .overlay { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); color: #333; padding: 20px; text-align: center; border-radius: 10px; border: 2px solid #333; font-size: 1.5rem; font-weight: bold; width: 60%; z-index: 10; }
-                .mobile-controls { display: flex; justify-content: center; gap: 20px; width: 100%; margin: 15px auto; }
-                .btn { background: #e0e0e0; color: #333; border: 2px solid #333; padding: 15px 30px; text-align: center; font-size: 1.2rem; border-radius: 8px; user-select: none; cursor: pointer; font-weight: bold; }
-                .btn:active { background: #bbb; }
+                body { margin:0; background:#fff; font-family:sans-serif; color:#333; text-align:center; }
+                .game-container { position: relative; width: 600px; margin: auto; }
+                canvas { background: #f7f7f7; display: block; margin: auto; border: 2px solid #333; } 
+                h1, p { margin: 10px 0; }
+                .overlay {
+                    display: none; position: absolute; top: 0; left: 2px; width: 600px; height: 150px;
+                    background: rgba(255, 255, 255, 0.9); color: #ff4b4b; flex-direction: column;
+                    justify-content: center; align-items: center; font-size: 1.8rem; font-weight: bold;
+                }
+                .mobile-controls { display: flex; gap: 20px; justify-content: center; margin-top: 15px; }
+                .btn { width: 120px; height: 60px; background: #eee; border: 2px solid #333; color: #333; font-size: 1.2rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; user-select: none; touch-action: manipulation; font-weight: bold; }
+                .btn:active { background: #ccc; }
             </style>
             <h1>🦖 Blob Run</h1><p id='score'>Score: 0</p>
             <div class="game-container">
-                <div id="overlay" class="overlay">try again?</div>
                 <canvas id="game" width="600" height="150"></canvas>
+                <div id="overlay" class="overlay">try again?</div>
             </div>
+            
             <div class="mobile-controls">
-                <div class="btn" id="btn-jump">JUMP (▲)</div>
-                <div class="btn" id="btn-duck">DUCK (▼)</div>
+                <div class="btn" id="b-jump">JUMP (▲)</div>
+                <div class="btn" id="b-duck">DUCK (▼)</div>
             </div>
+
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+            const overlay = document.getElementById('overlay');
             let dino = {y: 130, vy: 0, w: 18, h: 22, isJumping: false, isDucking: false}; 
             let obstacles = [], score = 0, gameRunning = true;
             
@@ -493,8 +517,8 @@ else:
 
                     if(o.x < dinoRight && o.x + o.w > dinoLeft && o.y < dinoBottom && o.y + o.h > dinoTop) {
                         gameRunning = false;
-                        document.getElementById('overlay').style.display = 'block';
-                        setTimeout(resetDinoGame, 2500);
+                        overlay.style.display = 'flex';
+                        setTimeout(resetDinoGame, 2000);
                     }
                 });
                 requestAnimationFrame(loop);
@@ -503,56 +527,68 @@ else:
             function resetDinoGame() {
                 score = 0; obstacles = []; spawnObstacle();
                 dino.y = 130; dino.vy = 0; dino.isJumping = false; dino.isDucking = false;
-                document.getElementById('overlay').style.display = 'none';
+                overlay.style.display = 'none';
                 gameRunning = true;
                 loop();
             }
 
-            function jump() {
-                if(!dino.isJumping && !dino.isDucking) { dino.vy = -8.5; dino.isJumping = true; }
-            }
+            function triggerJump() { if(!dino.isJumping && !dino.isDucking) { dino.vy = -8.5; dino.isJumping = true; } }
+            function setDuck(val) { dino.isDucking = val; }
 
             window.addEventListener('keydown', e => { 
                 const key = e.key.toLowerCase();
                 if([' ', 'arrowup', 'arrowdown', 'w', 's'].includes(key)) e.preventDefault();
-                if((key===' ' || key==='arrowup' || key==='w')) jump();
-                if((key==='arrowdown' || key==='s')) { dino.isDucking = true; }
+                if(key===' ' || key==='arrowup' || key==='w') triggerJump();
+                if(key==='arrowdown' || key==='s') setDuck(true);
             });
             window.addEventListener('keyup', e => {
                 const key = e.key.toLowerCase();
-                if(key==='arrowdown' || key==='s') { dino.isDucking = false; }
+                if(key==='arrowdown' || key==='s') setDuck(false);
             });
 
-            document.getElementById('btn-jump').addEventListener('touchstart', e => { e.preventDefault(); jump(); });
-            document.getElementById('btn-duck').addEventListener('touchstart', e => { e.preventDefault(); dino.isDucking = true; });
-            document.getElementById('btn-duck').addEventListener('touchend', e => { e.preventDefault(); dino.isDucking = false; });
+            document.getElementById('b-jump').addEventListener('touchstart', (e) => { e.preventDefault(); triggerJump(); });
+            document.getElementById('b-jump').addEventListener('click', triggerJump);
+            
+            const dBtn = document.getElementById('b-duck');
+            dBtn.addEventListener('touchstart', (e) => { e.preventDefault(); setDuck(true); });
+            dBtn.addEventListener('touchend', () => setDuck(false));
+            dBtn.addEventListener('mousedown', () => setDuck(true));
+            dBtn.addEventListener('mouseup', () => setDuck(false));
+
             loop();
             </script>
         """,
         "🍕 Pac-Man": """
             <style>
-                body { margin: 0; padding: 0; font-family: sans-serif; background: #000; color: white; touch-action: manipulation; }
-                canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; max-width: 100%; height: auto; } 
-                h1, p { text-align: center; margin: 5px 0; }
-                .game-container { position: relative; width: 380px; max-width: 100%; margin: auto; }
-                .overlay { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); color: #ffff00; padding: 20px; text-align: center; border-radius: 10px; border: 2px solid #ffff00; font-size: 1.5rem; font-weight: bold; width: 80%; z-index: 10; }
-                .mobile-controls { display: grid; grid-template-columns: repeat(3, 1fr); width: 180px; margin: 15px auto; gap: 10px; }
-                .btn { background: #333; color: white; border: 2px solid #fff; padding: 15px; text-align: center; font-size: 1.2rem; border-radius: 8px; user-select: none; cursor: pointer; }
-                .btn:active { background: #555; }
-                .spacer { visibility: hidden; }
+                body { margin:0; background:#000; font-family:sans-serif; color:white; text-align:center; }
+                .game-container { position: relative; width: 380px; margin: auto; }
+                canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; } 
+                h1, p { margin: 10px 0; }
+                .overlay {
+                    display: none; position: absolute; top: 0; left: 4px; width: 380px; height: 380px;
+                    background: rgba(0, 0, 0, 0.85); color: #ffff00; flex-direction: column;
+                    justify-content: center; align-items: center; font-size: 1.8rem; font-weight: bold;
+                }
+                .mobile-controls { display: grid; grid-template-columns: repeat(3, 65px); grid-template-rows: repeat(3, 65px); gap: 10px; justify-content: center; margin-top: 15px; }
+                .btn { background: #222; border: 2px solid #fff; color: white; font-size: 1.3rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; user-select: none; touch-action: manipulation; }
+                .btn:active { background: #444; }
+                .empty { visibility: hidden; }
             </style>
             <h1>🍕 Pac-Man Arcade</h1><p id='score'>Score: 0</p>
             <div class="game-container">
-                <div id="overlay" class="overlay">try again?</div>
                 <canvas id="game" width="380" height="380"></canvas>
+                <div id="overlay" class="overlay">try again?</div>
             </div>
+            
             <div class="mobile-controls">
-                <div class="spacer"></div><div class="btn" id="btn-up">▲</div><div class="spacer"></div>
-                <div class="btn" id="btn-left">◀</div><div class="spacer"></div><div class="btn" id="btn-right">▶</div>
-                <div class="spacer"></div><div class="btn" id="btn-down">▼</div><div class="spacer"></div>
+                <div class="empty"></div><div class="btn" id="p-up">▲</div><div class="empty"></div>
+                <div class="btn" id="p-left">◀</div><div class="empty"></div><div class="btn" id="p-right">▶</div>
+                <div class="empty"></div><div class="btn" id="p-down">▼</div><div class="empty"></div>
             </div>
+
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+            const overlay = document.getElementById('overlay');
             const tileSize = 20;
             let score = 0, gameRunning = true;
 
@@ -572,8 +608,8 @@ else:
                 [1,1,1,1,0,1,2,1,1,1,1,1,2,1,0,1,1,1,1],
                 [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
                 [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,1],
-                [1,0,0,1,0,0,0,0,0,2,0,0,0,0,0,1,0,0,1],
-                [1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1],
+                [1,0,0,1,0,2,2,2,2,2,2,2,2,2,0,1,0,0,1],
+                [1,1,0,1,0,1,2,1,1,1,1,1,2,1,0,1,0,1,1],
                 [1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1],
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
             ];
@@ -680,7 +716,7 @@ else:
 
                     if (g.x === pacman.x && g.y === pacman.y) {
                         gameRunning = false;
-                        document.getElementById('overlay').style.display = 'block';
+                        overlay.style.display = 'flex';
                         setTimeout(resetPacman, 2500);
                     }
                 });
@@ -692,7 +728,7 @@ else:
             function resetPacman() {
                 score = 0;
                 document.getElementById('score').innerText = 'Score: ' + score;
-                document.getElementById('overlay').style.display = 'none';
+                overlay.style.display = 'none';
                 pacman = { x: 9, y: 15, dx: 0, dy: 0, nextDx: 0, nextDy: 0 };
                 ghosts = [
                     { x: 9, y: 7, dx: 1, dy: 0, color: 'red' },
@@ -710,26 +746,29 @@ else:
                 draw();
             }
 
-            function handleInput(dir) {
-                if (dir === 'up') { pacman.nextDx = 0; pacman.nextDy = -1; }
-                if (dir === 'down') { pacman.nextDx = 0; pacman.nextDy = 1; }
-                if (dir === 'left') { pacman.nextDx = -1; pacman.nextDy = 0; }
-                if (dir === 'right') { pacman.nextDx = 1; pacman.nextDy = 0; }
+            function handleDirection(dir) {
+                if(dir === 'up') { pacman.nextDx = 0; pacman.nextDy = -1; }
+                if(dir === 'down') { pacman.nextDx = 0; pacman.nextDy = 1; }
+                if(dir === 'left') { pacman.nextDx = -1; pacman.nextDy = 0; }
+                if(dir === 'right') { pacman.nextDx = 1; pacman.nextDy = 0; }
             }
 
             window.addEventListener('keydown', e => {
                 const key = e.key.toLowerCase();
                 if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 's', 'a', 'd'].includes(key)) e.preventDefault();
-                if (key === 'arrowup' || key === 'w') handleInput('up');
-                if (key === 'arrowdown' || key === 's') handleInput('down');
-                if (key === 'arrowleft' || key === 'a') handleInput('left');
-                if (key === 'arrowright' || key === 'd') handleInput('right');
+                if (key === 'arrowup' || key === 'w') handleDirection('up');
+                if (key === 'arrowdown' || key === 's') handleDirection('down');
+                if (key === 'arrowleft' || key === 'a') handleDirection('left');
+                if (key === 'arrowright' || key === 'd') handleDirection('right');
             });
 
-            document.getElementById('btn-up').addEventListener('touchstart', e => { e.preventDefault(); handleInput('up'); });
-            document.getElementById('btn-down').addEventListener('touchstart', e => { e.preventDefault(); handleInput('down'); });
-            document.getElementById('btn-left').addEventListener('touchstart', e => { e.preventDefault(); handleInput('left'); });
-            document.getElementById('btn-right').addEventListener('touchstart', e => { e.preventDefault(); handleInput('right'); });
+            const pBind = (id, dir) => {
+                const el = document.getElementById(id);
+                el.addEventListener('touchstart', (e) => { e.preventDefault(); handleDirection(dir); });
+                el.addEventListener('click', () => handleDirection(dir));
+            };
+            pBind('p-up', 'up'); pBind('p-down', 'down');
+            pBind('p-left', 'left'); pBind('p-right', 'right');
 
             draw();
             update();
@@ -739,4 +778,4 @@ else:
 
     cleaned_mode = app_mode.strip()
     st.title(app_mode)
-    components.html(games[cleaned_mode], height=650)
+    components.html(games[cleaned_mode], height=680)
