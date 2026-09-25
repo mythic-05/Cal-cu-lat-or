@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import time
 import streamlit.components.v1 as components
@@ -64,10 +65,102 @@ if app_mode == "🔢 Calculator":
             else:
                 st.success(f"Result: {val1 / val2}")
 
-File "/mount/src/cal-cu-lat-or/app.py", line 67
-  const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
-        ^
-SyntaxError: invalid syntax
+else:
+    games = {
+        "🐍 Snake": """
+            <style>
+                body { margin:0; background:#000; font-family:sans-serif; color:white; text-align:center; }
+                .game-container { position: relative; width: 400px; margin: auto; }
+                canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; } 
+                h1, p { margin: 10px 0; }
+                .mobile-controls { display: grid; grid-template-columns: repeat(3, 65px); grid-template-rows: repeat(3, 65px); gap: 10px; justify-content: center; margin-top: 15px; }
+                .btn { background: #222; border: 2px solid #fff; color: white; font-size: 1.3rem; border-radius: 8px; display: flex; align-items: center; justify-content: center; user-select: none; touch-action: manipulation; }
+                .btn:active { background: #444; }
+                .empty { visibility: hidden; }
+            </style>
+            <h1>🐍 Snake</h1><p id='score'>Score: 0</p>
+            <div class="game-container">
+                <canvas id="game" width="400" height="400"></canvas>
+            </div>
+            
+            <div class="mobile-controls">
+                <div class="empty"></div><div class="btn" id="s-up">▲</div><div class="empty"></div>
+                <div class="btn" id="s-left">◀</div><div class="empty"></div><div class="btn" id="s-right">▶</div>
+                <div class="empty"></div><div class="btn" id="s-down">▼</div><div class="empty"></div>
+            </div>
+
+            <script>
+            const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+            const grid = 20;
+            let score = 0, step = 0;
+            let snake = { x: 160, y: 160, dx: grid, dy: 0, cells: [], maxCells: 4 };
+            let apple = { x: 320, y: 320 };
+
+            function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min)) + min; }
+
+            function loop() {
+                requestAnimationFrame(loop);
+                if (++step < 7) return;
+                step = 0;
+
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                snake.x += snake.dx; snake.y += snake.dy;
+
+                if (snake.x < 0 || snake.x >= canvas.width || snake.y < 0 || snake.y >= canvas.height) resetGame();
+
+                snake.cells.unshift({x: snake.x, y: snake.y});
+                if (snake.cells.length > snake.maxCells) snake.cells.pop();
+
+                ctx.fillStyle = '#ff4b4b';
+                ctx.fillRect(apple.x, apple.y, grid - 1, grid - 1);
+
+                ctx.fillStyle = '#00ffcc';
+                snake.cells.forEach((cell, index) => {
+                    ctx.fillRect(cell.x, cell.y, grid - 1, grid - 1);
+                    if (cell.x === apple.x && cell.y === apple.y) {
+                        snake.maxCells++;
+                        score += 10;
+                        document.getElementById('score').innerText = 'Score: ' + score;
+                        apple.x = getRandomInt(0, 20) * grid;
+                        apple.y = getRandomInt(0, 20) * grid;
+                    }
+                    for (let i = index + 1; i < snake.cells.length; i++) {
+                        if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) resetGame();
+                    }
+                });
+            }
+
+            function resetGame() {
+                snake.x = 160; snake.y = 160; snake.cells = []; snake.maxCells = 4;
+                snake.dx = grid; snake.dy = 0; score = 0;
+                document.getElementById('score').innerText = 'Score: ' + score;
+                apple.x = getRandomInt(0, 20) * grid; apple.y = getRandomInt(0, 20) * grid;
+            }
+
+            window.addEventListener('keydown', e => {
+                const k = e.key.toLowerCase();
+                if (['arrowup', 'w'].includes(k) && snake.dy === 0) { snake.dy = -grid; snake.dx = 0; }
+                else if (['arrowdown', 's'].includes(k) && snake.dy === 0) { snake.dy = grid; snake.dx = 0; }
+                else if (['arrowleft', 'a'].includes(k) && snake.dx === 0) { snake.dx = -grid; snake.dy = 0; }
+                else if (['arrowright', 'd'].includes(k) && snake.dx === 0) { snake.dx = grid; snake.dy = 0; }
+            });
+
+            const bindBtn = (id, dx, dy) => {
+                const el = document.getElementById(id);
+                const handle = (e) => {
+                    e.preventDefault();
+                    if (dx !== 0 && snake.dx === 0) { snake.dx = dx; snake.dy = 0; }
+                    if (dy !== 0 && snake.dy === 0) { snake.dy = dy; snake.dx = 0; }
+                };
+                el.addEventListener('touchstart', handle);
+                el.addEventListener('click', handle);
+            };
+            bindBtn('s-up', 0, -grid); bindBtn('s-down', 0, grid);
+            bindBtn('s-left', -grid, 0); bindBtn('s-right', grid, 0);
+
+            requestAnimationFrame(loop);
+            </script>
+        """,
         "🟓 Pong": """
             <style>
                 body { margin:0; background:#000; font-family:sans-serif; color:white; text-align:center; }
@@ -661,5 +754,7 @@ SyntaxError: invalid syntax
     }
 
     cleaned_mode = app_mode.strip()
-    st.title(app_mode)
-    components.html(games[cleaned_mode], height=680)
+    if cleaned_mode in games:
+        components.html(games[cleaned_mode], height=680)
+
+```
