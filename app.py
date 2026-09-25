@@ -4,7 +4,7 @@ import random
 import streamlit.components.v1 as components
 
 # --- APP CONFIGURATION & NAVIGATION ---
-st.set_page_config(page_title="", layout="centered")
+st.set_page_config(page_title="Web Arcade", layout="centered")
 
 # Sidebar navigation menu
 st.sidebar.title(" Applications ")
@@ -14,26 +14,54 @@ app_mode = st.sidebar.radio(
 )
 
 # -------------------------------------------------------------
+# BROWSER KEYBOARD ENGINE
+# -------------------------------------------------------------
+def inject_keyboard_engine(key_mapping):
+    """
+    Injects an isolated browser-level listener. Maps keystrokes safely 
+    to specific uniquely-keyed buttons on the active page.
+    """
+    js_code = f"""
+    <script>
+    const doc = window.parent.document;
+    doc.onkeydown = function(e) {{
+        let keyMap = {key_mapping};
+        if (e.key in keyMap) {{
+            let buttons = Array.from(doc.querySelectorAll('button'));
+            let targetBtn = buttons.find(el => el.innerText.trim().includes(keyMap[e.key]));
+            if (targetBtn) {{
+                e.preventDefault();
+                targetBtn.click();
+            }}
+        }}
+    }};
+    </script>
+    """
+    components.html(js_code, height=0, width=0)
+
+
+# -------------------------------------------------------------
 # PAGE 1: REAL FUNCTIONAL CALCULATOR 
 # -------------------------------------------------------------
 if app_mode == "🔢 Calculator":
     st.title("🔢 Calculator")
     st.caption("For those who just joined the stream calc is short for Calculator i'm just using slang")
 
-    val1 = st.number_input("First Number (x):", value=0.0, step=0.1, key="pro_val1")
+    val1 = st.number_input("First Number (x):", value=0.0, step=0.1, key="calc_val1")
     if val1 == 67:
         st.error("unfunny")
 
-    val2 = st.number_input("Second Number (y):", value=0.0, step=0.1, key="pro_val2")
+    val2 = st.number_input("Second Number (y):", value=0.0, step=0.1, key="calc_val2")
     if val2 == 67:
         st.error("67 in the big 26 🥀")
     
     operation = st.selectbox(
         "Select Operation:",
-        ["Addition (+)", "Subtraction (-)", "Multiplication (×)", "Division (÷)", "Power (x^y)", "Remainder (%)", "Absolute Value |x|"]
+        ["Addition (+)", "Subtraction (-)", "Multiplication (×)", "Division (÷)", "Power (x^y)", "Remainder (%)", "Absolute Value |x|"],
+        key="calc_operation"
     )
 
-    if st.button("Compute Result", key="pro_btn"):
+    if st.button("Compute Result", key="calc_btn_compute"):
         st.write("---")
         if operation == "Addition (+)":
             if (val1 == 9 and val2 == 10) or (val1 == 10 and val2 == 9):
@@ -83,13 +111,19 @@ if app_mode == "🔢 Calculator":
                 st.success(f"Result: {val1 / val2}")
 
 
-
 # -------------------------------------------------------------
 # PAGE 2: PLAYABLE SNAKE GAME 
 # -------------------------------------------------------------
 elif app_mode == "🐍 Snake":
     st.title("🐍 Web Arcade: Snake")
-    st.caption("Click a direction button below. The snake will instantly move one step in that direction!")
+    st.caption("🎮 KEYBOARD ENABLED: Arrow keys or W, A, S, D")
+
+    inject_keyboard_engine({
+        "ArrowUp": "Up", "w": "Up", "W": "Up",
+        "ArrowDown": "Down", "s": "Down", "S": "Down",
+        "ArrowLeft": "Left", "a": "Left", "A": "Left",
+        "ArrowRight": "Right", "d": "Right", "D": "Right"
+    })
 
     if 'snake' not in st.session_state:
         st.session_state.snake = [(5, 5), (5, 6), (5, 7)]
@@ -141,48 +175,56 @@ elif app_mode == "🐍 Snake":
     st.text("\n".join([" ".join(row) for row in grid]))
     st.write(f"🏆 Current Score: **{st.session_state.score}**")
 
+    snake_controls = st.container()
     if st.session_state.game_over:
         st.error("Game Over!")
         st.warning(st.session_state.current_hint)
-        if st.button("Play Again"):
+        if st.button("Play Again", key="snake_btn_retry"):
             reset_game()
             st.rerun()
     else:
-        st.write("--- Controls ---")
-        col1, col2, col3 = st.columns(3)
-        with col2:
-            if st.button("🔼 Up"):
-                move_snake("UP"); st.rerun()
-        col4, col5, col6 = st.columns(3)
-        with col4:
-            if st.button("◀️ Left"):
-                move_snake("LEFT"); st.rerun()
-        with col5:
-            st.write("D-Pad")
-        with col6:
-            if st.button("▶️ Right"):
-                move_snake("RIGHT"); st.rerun()
-        col7, col8, col9 = st.columns(3)
-        with col8:
-            if st.button("🔽 Down"):
-                move_snake("DOWN"); st.rerun()
+        with snake_controls:
+            st.write("--- Controls ---")
+            s_col1, s_col2, s_col3 = st.columns(3)
+            with s_col2:
+                if st.button("🔼 Up", key="snake_b_up"):
+                    move_snake("UP"); st.rerun()
+            s_col4, s_col5, s_col6 = st.columns(3)
+            with s_col4:
+                if st.button("◀️ Left", key="snake_b_left"):
+                    move_snake("LEFT"); st.rerun()
+            with s_col5:
+                st.write("D-Pad")
+            with s_col6:
+                if st.button("▶️ Right", key="snake_b_right"):
+                    move_snake("RIGHT"); st.rerun()
+            s_col7, s_col8, s_col9 = st.columns(3)
+            with s_col8:
+                if st.button("🔽 Down", key="snake_b_down"):
+                    move_snake("DOWN"); st.rerun()
+
+
 # -------------------------------------------------------------
-# PAGE 3: PLAYABLE SPACE INVADERS (PERSISTENT FASTER LASER
+# PAGE 3: PLAYABLE SPACE INVADERS
 # -------------------------------------------------------------
 elif app_mode == "👾 Space Invaders":
     st.title("👾 Space Invaders")
-    st.caption("Move your ship and fire lasers to clear the descending alien fleet!")
+    st.caption("🎮 KEYBOARD ENABLED: Arrow Left/Right to slide, Spacebar to shoot!")
 
-    # Initialize state variables safely
+    inject_keyboard_engine({
+        "ArrowLeft": "Move Left", "a": "Move Left", "A": "Move Left",
+        "ArrowRight": "Move Right", "d": "Move Right", "D": "Move Right",
+        " ": "Fire Laser"
+    })
+
     if 'player_x' not in st.session_state:
         st.session_state.player_x = 4
         st.session_state.invaders = [(1, 1), (3, 1), (5, 1), (7, 1), (2, 2), (4, 2), (6, 2)]
         st.session_state.si_score = 0
-        st.session_state.active_laser = None  # Tracks a persistent tuple: (laser_x, laser_y)
+        st.session_state.active_laser = None  
         st.session_state.si_game_over = False
 
     def draw_and_render_grid():
-        """Helper function to draw the current frame to the screen"""
         si_grid = [["⬛" for _ in range(10)] for _ in range(10)]
         if not st.session_state.si_game_over:
             for ix, iy in st.session_state.invaders:
@@ -193,7 +235,6 @@ elif app_mode == "👾 Space Invaders":
             si_grid[9][st.session_state.player_x] = "🚀"
         return "\n".join([" ".join(row) for row in si_grid])
 
-    # Screen visual containers
     grid_placeholder = st.empty()
     score_placeholder = st.empty()
 
@@ -201,39 +242,27 @@ elif app_mode == "👾 Space Invaders":
         if st.session_state.si_game_over:
             return
 
-        # 1. Handle Ship Movements without wiping out the existing active laser coordinate
         if action == "LEFT" and st.session_state.player_x > 0:
             st.session_state.player_x -= 1
         elif action == "RIGHT" and st.session_state.player_x < 9:
             st.session_state.player_x += 1
-
-        # 2. Handle Snappy, Fast Laser Fire Animation Loop
         elif action == "FIRE":
-            # Only fire if there isn't a laser already clearing empty space on screen
             if st.session_state.active_laser is None:
                 lx = st.session_state.player_x
                 ly = 9
-                
                 while ly > 0:
                     ly -= 1
                     st.session_state.active_laser = (lx, ly)
-                    
-                    # Real-time impact detection
                     if (lx, ly) in st.session_state.invaders:
                         st.session_state.invaders.remove((lx, ly))
                         st.session_state.si_score += 10
                         st.session_state.active_laser = None
                         break
-                        
-                    # Update graphics frame layout rapidly with 0.08s speed step
                     grid_placeholder.text(draw_and_render_grid())
                     score_placeholder.write(f"🏆 Score: **{st.session_state.si_score}**")
                     time.sleep(0.008)
-                
-                # Clear laser reference path once it harmlessly exits the top ceiling grid row
                 st.session_state.active_laser = None
 
-        # 3. Handle Alien Fleet Descent step pacing logic
         if random.random() < 0.35 and len(st.session_state.invaders) > 0:
             new_invaders = []
             for ix, iy in st.session_state.invaders:
@@ -242,45 +271,50 @@ elif app_mode == "👾 Space Invaders":
                 new_invaders.append((ix, iy + 1))
             st.session_state.invaders = new_invaders
 
-        # Tougher Wave Respawn Condition Check
         if len(st.session_state.invaders) == 0:
             st.session_state.invaders = [(1, 1), (3, 1), (5, 1), (7, 1), (2, 2), (4, 2), (6, 2)]
 
-    # Final visual refresh step
     grid_placeholder.text(draw_and_render_grid())
     score_placeholder.write(f"🏆 Score: **{st.session_state.si_score}**")
 
-    # Controller UI Panel 
+    si_controls = st.container()
     if st.session_state.si_game_over:
         st.error("Your ship was overrun!")
-        if st.button("Respawn Fleet"):
+        if st.button("Respawn Fleet", key="si_btn_retry"):
             del st.session_state.player_x
             st.rerun()
     else:
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("◀️ Move Left"):
-                run_si_turn("LEFT")
-                st.rerun()
-        with col2:
-            if st.button("🔥 Fire Laser"):
-                run_si_turn("FIRE")
-                st.rerun()
-        with col3:
-            if st.button("Move Right ▶️"):
-                run_si_turn("RIGHT")
-                st.rerun()
+        with si_controls:
+            si_col1, si_col2, si_col3 = st.columns(3)
+            with si_col1:
+                if st.button("◀️ Move Left", key="si_b_left"):
+                    run_si_turn("LEFT")
+                    st.rerun()
+            with si_col2:
+                if st.button("🔥 Fire Laser", key="si_b_fire"):
+                    run_si_turn("FIRE")
+                    st.rerun()
+            with si_col3:
+                if st.button("Move Right ▶️", key="si_b_right"):
+                    run_si_turn("RIGHT")
+                    st.rerun()
+
 
 # -------------------------------------------------------------
-# PAGE 4: PLAYABLE TETRIS (FIXED RESTART & LAYOUT FLUSH)
+# PAGE 4: PLAYABLE TETRIS
 # -------------------------------------------------------------
 elif app_mode == "🕹️Tetris":
     st.title("🕹️Tetris")
-    st.caption("Align horizontal rows! Blocks fall automatically at high speed.")
+    st.caption("🎮 KEYBOARD ENABLED: Arrow Left/Right to slide, Arrow Up or W to Rotate!")
+
+    inject_keyboard_engine({
+        "ArrowLeft": "Left", "a": "Left", "A": "Left",
+        "ArrowRight": "Right", "d": "Right", "D": "Right",
+        "ArrowUp": "Rotate", "w": "Rotate", "W": "Rotate"
+    })
 
     T_ROWS, T_COLS = 12, 8
-
-    # Classic Tetris Tetromino Shapes & Colors
+    
     SHAPES = {
         "I": {"matrix": [[1, 1, 1, 1]], "color": "🟪"},
         "O": {"matrix": [[1, 1], [1, 1]], "color": "🟨"},
@@ -299,7 +333,6 @@ elif app_mode == "🕹️Tetris":
             "y": 0
         }
 
-    # Clear lingering button artifacts by explicitly forcing unique state key mappings
     if 'tetris_board' not in st.session_state:
         st.session_state.tetris_board = [["⬛" for _ in range(T_COLS)] for _ in range(T_ROWS)]
         st.session_state.current_piece = get_random_piece()
@@ -355,9 +388,7 @@ elif app_mode == "🕹️Tetris":
     def run_tetris_step(action):
         if st.session_state.t_game_over:
             return
-
         piece = st.session_state.current_piece
-
         if action == "LEFT" and not check_collision(piece, offset_x=-1):
             piece["x"] -= 1
         elif action == "RIGHT" and not check_collision(piece, offset_x=1):
@@ -372,19 +403,16 @@ elif app_mode == "🕹️Tetris":
             else:
                 lock_piece(piece)
 
-    # Clean screen compilation layers
     grid_placeholder = st.empty()
     score_placeholder = st.empty()
-    
-    # FIX: Isolate controls inside a strictly typed container structure 
-    controls_placeholder = st.container()
+    tetris_controls = st.container()
 
     if st.session_state.t_game_over:
         grid_placeholder.empty()
         score_placeholder.write(f"🏆 Final Score: **{st.session_state.t_score}**")
-        with controls_placeholder:
+        with tetris_controls:
             st.error("Game Over!")
-            if st.button("Play Again", key="reset_tetris_final_unique"):
+            if st.button("Play Again", key="tetris_btn_retry"):
                 reset_tetris()
                 st.rerun()
     else:
@@ -402,25 +430,22 @@ elif app_mode == "🕹️Tetris":
         grid_placeholder.text(grid_string)
         score_placeholder.write(f"🏆 Score: **{st.session_state.t_score}**")
 
-        # FIX: Explicitly scoped columns assigned only within the cleared container block
-        with controls_placeholder:
+        with tetris_controls:
             st.write("--- Controls ---")
             t_col1, t_col2, t_col3 = st.columns(3)
             with t_col1:
-                # Adding unique strict keys prevents UI collision bleed entirely
-                if st.button("◀️ Left", key="tetris_btn_left_rigid"):
+                if st.button("◀️ Left", key="t_b_left"):
                     run_tetris_step("LEFT")
                     st.rerun()
             with t_col2:
-                if st.button("🔄 Rotate", key="tetris_btn_rotate_rigid"):
+                if st.button("🔄 Rotate", key="t_b_rotate"):
                     run_tetris_step("ROTATE")
                     st.rerun()
             with t_col3:
-                if st.button("Right ▶️", key="tetris_btn_right_rigid"):
+                if st.button("Right ▶️", key="t_b_right"):
                     run_tetris_step("RIGHT")
                     st.rerun()
 
         time.sleep(0.300)
         run_tetris_step("DROP")
         st.rerun()
-
