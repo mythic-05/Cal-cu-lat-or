@@ -372,22 +372,22 @@ elif app_mode == "🕹️Tetris":
             else:
                 lock_piece(piece)
 
-    # 1. Clear Screen Containers to prevent button duplication leak anomalies
+    # Clean screen compilation layers
     grid_placeholder = st.empty()
     score_placeholder = st.empty()
-    controls_placeholder = st.empty()
+    
+    # FIX: Isolate controls inside a strictly typed container structure 
+    controls_placeholder = st.container()
 
-    # CRITICAL: Intercept the game over condition instantly before running rendering calculations
     if st.session_state.t_game_over:
         grid_placeholder.empty()
         score_placeholder.write(f"🏆 Final Score: **{st.session_state.t_score}**")
-        with controls_placeholder.container():
+        with controls_placeholder:
             st.error("Game Over!")
-            if st.button("Play Again", key="reset_tetris_btn"):
+            if st.button("Play Again", key="reset_tetris_final_unique"):
                 reset_tetris()
                 st.rerun()
     else:
-        # Compile Active Matrix Graphics Layer
         display_board = [row[:] for row in st.session_state.tetris_board]
         p = st.session_state.current_piece
         for r_idx, row in enumerate(p["matrix"]):
@@ -402,24 +402,24 @@ elif app_mode == "🕹️Tetris":
         grid_placeholder.text(grid_string)
         score_placeholder.write(f"🏆 Score: **{st.session_state.t_score}**")
 
-        # 2. Controls Panel Interface Layout Layer (Flushed Cleanly on loops)
-        with controls_placeholder.container():
+        # FIX: Explicitly scoped columns assigned only within the cleared container block
+        with controls_placeholder:
             st.write("--- Controls ---")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                if st.button("◀️ Left", key="t_left"):
+            t_col1, t_col2, t_col3 = st.columns(3)
+            with t_col1:
+                # Adding unique strict keys prevents UI collision bleed entirely
+                if st.button("◀️ Left", key="tetris_btn_left_rigid"):
                     run_tetris_step("LEFT")
                     st.rerun()
-            with col2:
-                if st.button("🔄 Rotate", key="t_rotate"):
+            with t_col2:
+                if st.button("🔄 Rotate", key="tetris_btn_rotate_rigid"):
                     run_tetris_step("ROTATE")
                     st.rerun()
-            with col3:
-                if st.button("Right ▶️", key="t_right"):
+            with t_col3:
+                if st.button("Right ▶️", key="tetris_btn_right_rigid"):
                     run_tetris_step("RIGHT")
                     st.rerun()
 
-        # 3. Synchronized Continuous Fall Timer Execution Cycle Step
         time.sleep(0.300)
         run_tetris_step("DROP")
         st.rerun()
