@@ -73,20 +73,26 @@ else:
             <style>
                 canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; } 
                 h1, p { color: white; text-align: center; font-family: sans-serif; }
+                .status-container { text-align: center; margin-top: 15px; }
+                .status-box { display: inline-block; background-color: #2b2b2b; color: #ff4b4b; font-family: sans-serif; font-size: 1.1rem; padding: 10px 20px; border-radius: .5rem; border: 1px solid #ff4b4b; font-weight: bold; }
             </style>
             <h1>🐍 Snake Game</h1><p id='score'>Score: 0</p>
             <canvas id="game" width="400" height="400"></canvas>
+            <div class="status-container"><div id="status" class="status-box">🟢 Game Status: Active</div></div>
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
-            let grid = 20, score = 0;
+            let grid = 20, score = 0, gameRunning = true;
             let snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
             let dx = grid, dy = 0;
             let food = {x: 80, y: 80};
 
             function main() {
+                if (!gameRunning) return;
                 if (gameOver()) {
-                    alert('Game Over! Score: ' + score);
-                    resetGame();
+                    gameRunning = false;
+                    document.getElementById('status').innerText = '❌ Game Over! Restarting...';
+                    setTimeout(resetGame, 2000);
+                    return;
                 }
                 setTimeout(function() { clear(); drawFood(); move(); drawSnake(); main(); }, 150);
             }
@@ -94,7 +100,10 @@ else:
                 snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
                 dx = grid; dy = 0; score = 0;
                 document.getElementById('score').innerText = 'Score: ' + score;
+                document.getElementById('status').innerText = '🟢 Game Status: Active';
                 food = {x: 80, y: 80};
+                gameRunning = true;
+                main();
             }
             function clear() { ctx.fillStyle = '#111'; ctx.fillRect(0,0,canvas.width,canvas.height); }
             function drawSnake() { ctx.fillStyle = 'lime'; snake.forEach(s => ctx.fillRect(s.x, s.y, grid-2, grid-2)); }
@@ -171,9 +180,12 @@ else:
             <style>
                 canvas { background: #111; display: block; margin: auto; border: 4px solid #fff; } 
                 h1, p { color: white; text-align: center; font-family: sans-serif; }
+                .status-container { text-align: center; margin-top: 15px; }
+                .status-box { display: inline-block; background-color: #2b2b2b; color: #00d2ff; font-family: sans-serif; font-size: 1.1rem; padding: 10px 20px; border-radius: .5rem; border: 1px solid #00d2ff; font-weight: bold; }
             </style>
             <h1>🕹️ Tetris</h1><p id='score'>Score: 0</p>
             <canvas id="game" width="240" height="400"></canvas>
+            <div class="status-container"><div id="status" class="status-box">🟢 Game Status: Active</div></div>
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
             ctx.scale(20, 20);
@@ -182,7 +194,7 @@ else:
             const COLORS = [null, '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF'];
             const SHAPES = 'ILJOTSZ';
 
-            let score = 0;
+            let score = 0, gameRunning = true;
             let player = { pos: {x: 0, y: 0}, matrix: null, colorId: 1 };
 
             function createPiece(type) {
@@ -226,13 +238,21 @@ else:
             }
 
             function arenaSweep() {
-                outer: for (let y = arena.length - 1; y >= 0; --y) {
+                let rowsCleared = 0;
+                for (let y = arena.length - 1; y >= 0; --y) {
+                    let full = true;
                     for (let x = 0; x < arena[y].length; ++x) {
-                        if (arena[y][x] === 0) continue outer;
+                        if (arena[y][x] === 0) { full = false; break; }
                     }
-                    const row = arena.splice(y, 1).fill(0);
-                    arena.unshift(row);
-                    ++y; score += 100;
+                    if (full) {
+                        arena.splice(y, 1);
+                        arena.unshift(Array(12).fill(0));
+                        y++; 
+                        rowsCleared++;
+                    }
+                }
+                if (rowsCleared > 0) {
+                    score += rowsCleared * 100;
                     document.getElementById('score').innerText = 'Score: ' + score;
                 }
             }
@@ -244,13 +264,29 @@ else:
                 player.colorId = SHAPES.indexOf(char) + 1;
                 player.pos.y = 0;
                 player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
-                if (collide(arena, player)) { arena.forEach(row => row.fill(0)); score = 0; }
+                
+                if (collide(arena, player)) { 
+                    gameRunning = false;
+                    document.getElementById('status').innerText = '❌ Game Over! Resetting...';
+                    setTimeout(() => {
+                        arena.forEach(row => row.fill(0)); 
+                        score = 0; 
+                        document.getElementById('score').innerText = 'Score: ' + score;
+                        document.getElementById('status').innerText = '🟢 Game Status: Active';
+                        gameRunning = true;
+                        playerReset();
+                    }, 2000);
+                }
             }
 
             function playerDrop() {
+                if (!gameRunning) return;
                 player.pos.y++;
                 if (collide(arena, player)) {
-                    player.pos.y--; merge(arena, player); playerReset(); arenaSweep();
+                    player.pos.y--; 
+                    merge(arena, player); 
+                    arenaSweep();
+                    playerReset(); 
                 }
                 dropCounter = 0;
             }
@@ -270,6 +306,7 @@ else:
             }
 
             window.addEventListener('keydown', e => {
+                if (!gameRunning) return;
                 const key = e.key.toLowerCase();
                 if(key==='arrowleft' || key==='a') { player.pos.x--; if(collide(arena, player)) player.pos.x++; }
                 if(key==='arrowright' || key==='d') { player.pos.x++; if(collide(arena, player)) player.pos.x--; }
@@ -286,21 +323,28 @@ else:
             <style>
                 canvas { background: #f7f7f7; display: block; margin: auto; border: 2px solid #333; } 
                 h1, p { color: #333; text-align: center; font-family: sans-serif; }
+                .status-container { text-align: center; margin-top: 15px; }
+                .status-box { display: inline-block; background-color: #e0e0e0; color: #333; font-family: sans-serif; font-size: 1.1rem; padding: 10px 20px; border-radius: .5rem; border: 1px solid #333; font-weight: bold; }
             </style>
             <h1>🦖 T-Rex Run</h1><p id='score'>Score: 0</p>
             <canvas id="game" width="600" height="150"></canvas>
+            <div class="status-container"><div id="status" class="status-box">🟢 Game Status: Active</div></div>
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
-            let dino = {y: 130, vy: 0, isJumping: false, isDucking: false}, obstacles = [], score = 0;
+            let dino = {y: 130, vy: 0, w: 18, h: 22, isJumping: false, isDucking: false}; 
+            let obstacles = [], score = 0, gameRunning = true;
             
             function spawnObstacle() {
                 let type = Math.random() < 0.4 ? 'bird' : 'cactus';
-                let obsY = type === 'bird' ? 95 : 110; 
-                obstacles.push({x: 650, type: type, y: obsY, w: 15, h: type==='bird'?15:35});
+                let obsY = type === 'bird' ? 95 : 112; 
+                let obsW = type === 'bird' ? 15 : 12;
+                let obsH = type === 'bird' ? 12 : 26;
+                obstacles.push({x: 650, type: type, y: obsY, w: obsW, h: obsH});
             }
             spawnObstacle();
 
             function loop() {
+                if (!gameRunning) return;
                 ctx.clearRect(0,0,600,150); score++; document.getElementById('score').innerText = 'Score: ' + score;
                 
                 if(dino.isJumping) { 
@@ -310,13 +354,15 @@ else:
                 
                 ctx.fillStyle = '#333';
                 if(dino.isDucking && !dino.isJumping) {
-                    ctx.fillRect(50, 120, 32, 15); 
-                    ctx.fillRect(72, 115, 12, 10); 
+                    dino.w = 30; dino.h = 13;
+                    ctx.fillRect(50, 130 - dino.h, dino.w, dino.h); 
+                    ctx.fillRect(50 + dino.w, 130 - dino.h + 2, 8, 8); 
                 } else {
-                    ctx.fillRect(50, dino.y-25, 20, 20); 
-                    ctx.fillRect(62, dino.y-35, 14, 14); 
-                    ctx.fillStyle = 'white'; ctx.fillRect(70, dino.y-32, 2, 2); 
-                    ctx.fillStyle = '#333'; ctx.fillRect(54, dino.y-5, 4, 6); ctx.fillRect(62, dino.y-5, 4, 6); 
+                    dino.w = 18; dino.h = 24;
+                    ctx.fillRect(50, dino.y-dino.h, dino.w, dino.h); 
+                    ctx.fillRect(50 + dino.w, dino.y-dino.h, 6, 8); 
+                    ctx.fillStyle = 'white'; ctx.fillRect(50 + dino.w + 2, dino.y-dino.h + 2, 2, 2); 
+                    ctx.fillStyle = '#333'; ctx.fillRect(53, dino.y, 3, 5); ctx.fillRect(61, dino.y, 3, 5); 
                 }
 
                 if(Math.random() < 0.01 && (obstacles.length === 0 || obstacles[obstacles.length-1].x < 420)) spawnObstacle();
@@ -328,16 +374,26 @@ else:
                     
                     if(o.x < -20) obstacles.splice(i, 1);
                     
-                    let dinoTop = dino.isDucking && !dino.isJumping ? 120 : dino.y - 25;
-                    let dinoBottom = 135;
+                    let dinoTop = dino.isDucking && !dino.isJumping ? 130 - dino.h : dino.y - dino.h;
+                    let dinoBottom = dino.isDucking && !dino.isJumping ? 130 : dino.y;
                     let dinoLeft = 50;
-                    let dinoRight = dino.isDucking && !dino.isJumping ? 82 : 70;
+                    let dinoRight = 50 + (dino.isDucking && !dino.isJumping ? dino.w + 8 : dino.w);
 
                     if(o.x < dinoRight && o.x + o.w > dinoLeft && o.y < dinoBottom && o.y + o.h > dinoTop) {
-                        alert('Game Over! Restarting...'); score = 0; obstacles = []; spawnObstacle();
+                        gameRunning = false;
+                        document.getElementById('status').innerText = '💥 CRASH! Game Over! Restarting...';
+                        setTimeout(resetDinoGame, 2000);
                     }
                 });
                 requestAnimationFrame(loop);
+            }
+
+            function resetDinoGame() {
+                score = 0; obstacles = []; spawnObstacle();
+                dino.y = 130; dino.vy = 0; dino.isJumping = false; dino.isDucking = false;
+                document.getElementById('status').innerText = '🟢 Game Status: Active';
+                gameRunning = true;
+                loop();
             }
 
             window.addEventListener('keydown', e => { 
@@ -358,4 +414,4 @@ else:
 
     cleaned_mode = app_mode.replace("🕹️Tetris", "🕹️Tetris").strip()
     st.title(app_mode)
-    components.html(games[cleaned_mode], height=520)
+    components.html(games[cleaned_mode], height=560)
