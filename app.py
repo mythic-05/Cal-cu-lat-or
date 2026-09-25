@@ -5,10 +5,11 @@ import streamlit.components.v1 as components
 # --- APP CONFIGURATION & NAVIGATION ---
 st.set_page_config(page_title="Web Arcade", layout="centered")
 
+# Sidebar navigation menu
 st.sidebar.title(" Applications ")
 app_mode = st.sidebar.radio(
     "Choose a tool to load:",
-    ["🔢 Calculator", "🐍 Snake", "👾 Space Invaders", "🕹️Tetris", "🦖 T-Rex Run"]
+    ["🔢 Calculator", "🐍 Snake", "🟓 Pong", "🕹️Tetris", "🦖 T-Rex Run"]
 )
 
 # -------------------------------------------------------------
@@ -64,7 +65,7 @@ if app_mode == "🔢 Calculator":
                 st.success(f"Result: {val1 / val2}")
 
 # -------------------------------------------------------------
-# BROWSER-NATIVE GAME INTERFACES (Zero-Delay JavaScript)
+# BROWSER-NATIVE GAME ENGINE LOADER (Zero-Delay JavaScript Canvas)
 # -------------------------------------------------------------
 else:
     games = {
@@ -87,7 +88,6 @@ else:
                     alert('Game Over! Score: ' + score);
                     resetGame();
                 }
-                // FIXED: Increased timeout from 90 to 150 to make the snake noticeably slower
                 setTimeout(function() { clear(); drawFood(); move(); drawSnake(); main(); }, 150);
             }
             function resetGame() {
@@ -117,98 +117,53 @@ else:
                 return wallCollision || selfCollision;
             }
             window.addEventListener('keydown', e => {
-                if((e.key==='ArrowUp' || e.key==='w' || e.key==='W') && dy===0){dx=0;dy=-grid;}
-                if((e.key==='ArrowDown' || e.key==='s' || e.key==='S') && dy===0){dx=0;dy=grid;}
-                if((e.key==='ArrowLeft' || e.key==='a' || e.key==='A') && dx===0){dx=-grid;dy=0;}
-                if((e.key==='ArrowRight' || e.key==='d' || e.key==='D') && dx===0){dx=grid;dy=0;}
+                const key = e.key.toLowerCase();
+                if((e.key==='ArrowUp' || key==='w') && dy===0){dx=0;dy=-grid;}
+                if((e.key==='ArrowDown' || key==='s') && dy===0){dx=0;dy=grid;}
+                if((e.key==='ArrowLeft' || key==='a') && dx===0){dx=-grid;dy=0;}
+                if((e.key==='ArrowRight' || key==='d') && dx===0){dx=grid;dy=0;}
             });
             main();
             </script>
         """,
-        "👾 Space Invaders": """
+        "🟓 Pong": """
             <style>
                 canvas { background: #000; display: block; margin: auto; border: 4px solid #fff; } 
                 h1, p { color: white; text-align: center; font-family: sans-serif; }
             </style>
-            <h1>👾 Space Invaders</h1><p id='score'>Score: 0</p>
-            <canvas id="game" width="400" height="400"></canvas>
+            <h1>🟓 Pong Match</h1><p>Left (W/S) | Right (Up/Down)</p>
+            <canvas id="game" width="600" height="400"></canvas>
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
-            let player = {x: 180, y: 360, w: 30, h: 20}, lasers = [], invaders = [], score = 0;
-            let lastShotTime = 0; // FIXED: For shooting delay rate-limiting
-            let invaderDirection = 1; // 1 = right, -1 = left
-            let invaderMoveCounter = 0;
-
-            function initInvaders() {
-                invaders = [];
-                for(let i=0; i<6; i++) for(let j=0; j<3; j++) invaders.push({x: 40+i*50, y: 30+j*30, w:25, h:20});
-            }
-            initInvaders();
+            let leftPaddle = {x: 10, y: 150, w: 10, h: 80}, rightPaddle = {x: 580, y: 150, w: 10, h: 80};
+            let ball = {x: 300, y: 200, r: 7, vx: 4, vy: 4};
+            let keys = {};
 
             function loop() {
-                ctx.clearRect(0,0,400,400); 
-                ctx.fillStyle='blue'; ctx.fillRect(player.x, player.y, player.w, player.h);
-                ctx.fillStyle='red'; invaders.forEach(inv => ctx.fillRect(inv.x, inv.y, inv.w, inv.h));
-                ctx.fillStyle='yellow'; 
+                ctx.clearRect(0, 0, 600, 400);
                 
-                // FIXED: Make fleet dynamically step sideways and march down closer over time
-                invaderMoveCounter++;
-                if (invaderMoveCounter % 40 === 0) {
-                    let shiftDown = false;
-                    invaders.forEach(inv => {
-                        inv.x += invaderDirection * 10;
-                        if (inv.x > 360 || inv.x < 10) { shiftDown = true; }
-                    });
-                    if (shiftDown) {
-                        invaderDirection *= -1;
-                        invaders.forEach(inv => { inv.y += 15; });
-                    }
-                }
+                if (keys['w']) leftPaddle.y = Math.max(0, leftPaddle.y - 6);
+                if (keys['s']) leftPaddle.y = Math.min(320, leftPaddle.y + 6);
+                if (keys['arrowup']) rightPaddle.y = Math.max(0, rightPaddle.y - 6);
+                if (keys['arrowdown']) rightPaddle.y = Math.min(320, rightPaddle.y + 6);
 
-                // Game Over if invaders breach defense perimeter
-                invaders.forEach(inv => {
-                    if (inv.y + inv.h >= player.y) {
-                        alert('Game Over! Your base was overrun.');
-                        initInvaders();
-                        score = 0;
-                    }
-                });
-                
-                lasers.forEach((l,li) => { 
-                    l.y-=7; 
-                    ctx.fillRect(l.x, l.y, 4, 10); 
-                    if(l.y<0) lasers.splice(li,1); 
-                });
-                
-                lasers.forEach((l,li) => { 
-                    invaders.forEach((inv,ii) => {
-                        if(l.x>inv.x && l.x<inv.x+inv.w && l.y>inv.y && l.y<inv.y+inv.h) { 
-                            invaders.splice(ii,1); 
-                            lasers.splice(li,1); 
-                            score+=10; 
-                            document.getElementById('score').innerText = 'Score: ' + score; 
-                        }
-                    })
-                });
-                
-                if(invaders.length === 0) {
-                    alert('You Win! Initializing next fleet...');
-                    initInvaders();
-                }
+                ball.x += ball.vx; ball.y += ball.vy;
+                if(ball.y <= 0 || ball.y >= 400) ball.vy *= -1;
+
+                if(ball.x <= leftPaddle.x + leftPaddle.w && ball.y >= leftPaddle.y && ball.y <= leftPaddle.y + leftPaddle.h) { ball.vx = Math.abs(ball.vx) + 0.2; }
+                if(ball.x >= rightPaddle.x - ball.r && ball.y >= rightPaddle.y && ball.y <= rightPaddle.y + rightPaddle.h) { ball.vx = -Math.abs(ball.vx) - 0.2; }
+
+                if(ball.x < 0 || ball.x > 600) { ball.x = 300; ball.y = 200; ball.vx = ball.vx > 0 ? -4 : 4; }
+
+                ctx.fillStyle = 'white';
+                ctx.fillRect(leftPaddle.x, leftPaddle.y, leftPaddle.w, leftPaddle.h);
+                ctx.fillRect(rightPaddle.x, rightPaddle.y, rightPaddle.w, rightPaddle.h);
+                ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); ctx.fill();
+
                 requestAnimationFrame(loop);
             }
-            window.addEventListener('keydown', e => {
-                if((e.key==='ArrowLeft' || e.key==='a' || e.key==='A') && player.x>0) player.x-=20;
-                if((e.key==='ArrowRight' || e.key==='d' || e.key==='D') && player.x<370) player.x+=20;
-                if(e.key===' ') {
-                    let now = Date.now();
-                    // FIXED: Enforce a 400ms weapons-cooldown shooting delay
-                    if (now - lastShotTime > 400) {
-                        lasers.push({x: player.x+13, y: player.y});
-                        lastShotTime = now;
-                    }
-                }
-            });
+            window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+            window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
             loop();
             </script>
         """,
@@ -224,99 +179,107 @@ else:
             ctx.scale(20, 20);
             
             const arena = Array(20).fill().map(() => Array(12).fill(0));
-            
-            // Standard tetromino blocks
-            const SHAPES = [
-                [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], // I
-                [[2,2],[2,2]], // O
-                [[0,3,0],[3,3,3],[0,0,0]], // T
-                [[4,0,0],[4,4,4],[0,0,0]]  // L
-            ];
+            const COLORS = [null, '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF'];
+            const SHAPES = 'ILJOTSZ';
 
-            function createPiece() {
-                const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-                return { pos: {x: 4, y: 0}, matrix: shape };
-            }
-
-            let player = createPiece();
             let score = 0;
+            let player = { pos: {x: 0, y: 0}, matrix: null, colorId: 1 };
+
+            function createPiece(type) {
+                if (type === 'T') return [[0,1,0],[1,1,1],[0,0,0]];
+                if (type === 'O') return [[1,1],[1,1]];
+                if (type === 'I') return [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]];
+                if (type === 'L') return [[0,1,0],[0,1,0],[0,1,1]];
+                if (type === 'J') return [[0,1,0],[0,1,0],[1,1,0]];
+                if (type === 'S') return [[0,1,1],[1,1,0],[0,0,0]];
+                if (type === 'Z') return [[1,1,0],[0,1,1],[0,0,0]];
+            }
 
             function draw() { 
                 ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); 
-                drawMatrix(arena, {x:0, y:0}, 'cyan'); 
-                drawMatrix(player.matrix, player.pos, 'red'); 
+                drawMatrix(arena, {x:0, y:0}); 
+                drawMatrix(player.matrix, player.pos); 
             }
-            function drawMatrix(m, o, color) { 
+
+            function drawMatrix(m, o) { 
                 m.forEach((row, y) => row.forEach((val, x) => { 
-                    if(val !== 0) { ctx.fillStyle=color; ctx.fillRect(x + o.x, y + o.y, 1, 1); } 
+                    if(val) { ctx.fillStyle = COLORS[val]; ctx.fillRect(x + o.x, y + o.y, 1, 1); } 
                 })); 
             }
+
             function merge(arena, player) {
                 player.matrix.forEach((row, y) => {
                     row.forEach((value, x) => {
-                        if (value) { arena[y + player.pos.y][x + player.pos.x] = value; }
+                        if (value) { arena[y + player.pos.y][x + player.pos.x] = player.colorId; }
                     });
                 });
             }
+
             function collide(arena, player) {
                 const [m, o] = [player.matrix, player.pos];
                 for (let y = 0; y < m.length; ++y) {
                     for (let x = 0; x < m[y].length; ++x) {
-                        if (m[y][x] !== 0 && (arena[y + o.y] === undefined || arena[y + o.y][x + o.x] === undefined || arena[y + o.y][x + o.x] !== 0)) { return true; }
+                        if (m[y][x] !== 0 && (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) { return true; }
                     }
                 }
                 return false;
             }
-            
-            // FIXED: Clear rows properly instead of resetting whole board back to top when a single block hits floor!
+
             function arenaSweep() {
-                let rowCount = 1;
-                outer: for (let y = arena.length - 1; y > 0; --y) {
+                outer: for (let y = arena.length - 1; y >= 0; --y) {
                     for (let x = 0; x < arena[y].length; ++x) {
-                        if (arena[y][x] === 0) { continue outer; }
+                        if (arena[y][x] === 0) continue outer;
                     }
-                    const row = arena.splice(y, 1)[0].fill(0);
+                    const row = arena.splice(y, 1).fill(0);
                     arena.unshift(row);
-                    ++y;
-                    score += rowCount * 100;
+                    ++y; score += 100;
                     document.getElementById('score').innerText = 'Score: ' + score;
                 }
+            }
+
+            function playerReset() {
+                const pieces = SHAPES;
+                const char = pieces[pieces.length * Math.random() | 0];
+                player.matrix = createPiece(char);
+                player.colorId = SHAPES.indexOf(char) + 1;
+                player.pos.y = 0;
+                player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+                if (collide(arena, player)) { arena.forEach(row => row.fill(0)); score = 0; }
             }
 
             function playerDrop() {
                 player.pos.y++;
                 if (collide(arena, player)) {
-                    player.pos.y--;
-                    merge(arena, player);
-                    arenaSweep(); // Check for completed lines
-                    player = createPiece(); // Spawn new piece at top
-                    if (collide(arena, player)) {
-                        // Real game over clear
-                        arena.forEach(row => row.fill(0));
-                        score = 0;
-                        document.getElementById('score').innerText = 'Score: ' + score;
-                    }
+                    player.pos.y--; merge(arena, player); playerReset(); arenaSweep();
                 }
                 dropCounter = 0;
             }
 
-            let dropCounter = 0; 
-            let lastTime = 0;
-            function update(time = 0) { 
-                const deltaTime = time - lastTime;
-                lastTime = time;
-                dropCounter += deltaTime; 
-                // FIXED: Adjusted threshold counter drop speed from 1000ms down to 400ms for faster drops
-                if(dropCounter > 400) { playerDrop(); } 
-                draw(); 
-                requestAnimationFrame(update); 
+            function rotate(matrix) {
+                for (let y = 0; y < matrix.length; ++y) {
+                    for (let x = 0; x < y; ++x) { [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]]; }
+                }
+                matrix.forEach(row => row.reverse());
             }
+
+            let dropCounter = 0, lastTime = 0;
+            function update(time = 0) { 
+                const deltaTime = time - lastTime; lastTime = time; dropCounter += deltaTime; 
+                if(dropCounter > 200) { playerDrop(); } 
+                draw(); requestAnimationFrame(update); 
+            }
+
             window.addEventListener('keydown', e => {
-                if(e.key==='ArrowLeft' || e.key==='a') { player.pos.x--; if(collide(arena, player)) player.pos.x++; }
-                if(e.key==='ArrowRight' || e.key==='d') { player.pos.x++; if(collide(arena, player)) player.pos.x--; }
-                if(e.key==='ArrowDown' || e.key==='s') { playerDrop(); }
+                const key = e.key.toLowerCase();
+                if(key==='arrowleft' || key==='a') { player.pos.x--; if(collide(arena, player)) player.pos.x++; }
+                if(key==='arrowright' || key==='d') { player.pos.x++; if(collide(arena, player)) player.pos.x--; }
+                if(key==='arrowdown' || key==='s') { playerDrop(); }
+                if(e.key===' ') { 
+                    rotate(player.matrix); 
+                    if(collide(arena, player)) { rotate(player.matrix); rotate(player.matrix); rotate(player.matrix); }
+                }
             });
-            update();
+            playerReset(); update();
             </script>
         """,
         "🦖 T-Rex Run": """
@@ -328,58 +291,71 @@ else:
             <canvas id="game" width="600" height="150"></canvas>
             <script>
             const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
-            // FIXED: Toned down velocity gravity jump heights so the dino isn't soaring off-screen
-            let dino = {y: 130, vy: 0, isJumping: false}, obstacles = [{x: 600}], score = 0;
+            let dino = {y: 130, vy: 0, isJumping: false, isDucking: false}, obstacles = [], score = 0;
             
+            function spawnObstacle() {
+                let type = Math.random() < 0.4 ? 'bird' : 'cactus';
+                let obsY = type === 'bird' ? 95 : 110; 
+                obstacles.push({x: 650, type: type, y: obsY, w: 15, h: type==='bird'?15:35});
+            }
+            spawnObstacle();
+
             function loop() {
-                ctx.clearRect(0,0,600,150); 
-                score++; 
-                document.getElementById('score').innerText = 'Score: ' + score;
+                ctx.clearRect(0,0,600,150); score++; document.getElementById('score').innerText = 'Score: ' + score;
                 
                 if(dino.isJumping) { 
-                    dino.vy += 0.7; // Increased gravity drop down speed
-                    dino.y += dino.vy; 
+                    dino.vy += 0.55; dino.y += dino.vy; 
                     if(dino.y >= 130) { dino.y = 130; dino.isJumping = false; } 
                 }
                 
-                // FIXED: Render actual geometric visual elements for a simple green T-Rex dinosaur layout profile instead of a flat generic cube structure box
-                ctx.fillStyle='green';
-                ctx.fillRect(50, dino.y - 25, 20, 25); // Body
-                ctx.fillRect(60, dino.y - 33, 14, 12); // Head snout layout
-                ctx.fillStyle='black';
-                ctx.fillRect(63, dino.y - 30, 2, 2);   // Eye tracking pixel
-                ctx.fillStyle='green';
-                ctx.fillRect(46, dino.y - 12, 5, 8);   // Back leg extension
-                ctx.fillRect(56, dino.y - 12, 5, 8);   // Front leg extension
-                
+                ctx.fillStyle = '#333';
+                if(dino.isDucking && !dino.isJumping) {
+                    ctx.fillRect(50, 120, 32, 15); 
+                    ctx.fillRect(72, 115, 12, 10); 
+                } else {
+                    ctx.fillRect(50, dino.y-25, 20, 20); 
+                    ctx.fillRect(62, dino.y-35, 14, 14); 
+                    ctx.fillStyle = 'white'; ctx.fillRect(70, dino.y-32, 2, 2); 
+                    ctx.fillStyle = '#333'; ctx.fillRect(54, dino.y-5, 4, 6); ctx.fillRect(62, dino.y-5, 4, 6); 
+                }
+
+                if(Math.random() < 0.01 && (obstacles.length === 0 || obstacles[obstacles.length-1].x < 420)) spawnObstacle();
+
                 obstacles.forEach((o, i) => { 
-                    o.x -= 6; 
-                    ctx.fillStyle='brown';
-                    ctx.fillRect(o.x, 115, 12, 35); // Cactus obstacle structure
-                    if(o.x < -15) o.x = 600 + Math.random()*300; 
+                    o.x -= 6.5; 
+                    ctx.fillStyle = o.type === 'bird' ? 'blue' : 'green';
+                    ctx.fillRect(o.x, o.y, o.w, o.h);
                     
-                    if(o.x > 35 && o.x < 70 && dino.y >= 115) { 
-                        alert('Game Over! Your high score was: ' + score); 
-                        score = 0; 
-                        o.x = 600; 
+                    if(o.x < -20) obstacles.splice(i, 1);
+                    
+                    let dinoTop = dino.isDucking && !dino.isJumping ? 120 : dino.y - 25;
+                    let dinoBottom = 135;
+                    let dinoLeft = 50;
+                    let dinoRight = dino.isDucking && !dino.isJumping ? 82 : 70;
+
+                    if(o.x < dinoRight && o.x + o.w > dinoLeft && o.y < dinoBottom && o.y + o.h > dinoTop) {
+                        alert('Game Over! Restarting...'); score = 0; obstacles = []; spawnObstacle();
                     }
                 });
                 requestAnimationFrame(loop);
             }
+
             window.addEventListener('keydown', e => { 
-                // FIXED: Adjusted standard lift jump vector from -12 down to -8.5 for normal trajectory arcs
-                if((e.key===' ' || e.key==='ArrowUp' || e.key==='w' || e.key==='W') && !dino.isJumping) { 
-                    dino.vy = -8.5; 
-                    dino.isJumping = true; 
+                const key = e.key.toLowerCase();
+                if((key===' ' || key==='arrowup' || key==='w') && !dino.isJumping && !dino.isDucking) { 
+                    dino.vy = -8.5; dino.isJumping = true; 
                 } 
+                if((key==='arrowdown' || key==='s')) { dino.isDucking = true; }
+            });
+            window.addEventListener('keyup', e => {
+                const key = e.key.toLowerCase();
+                if(key==='arrowdown' || key==='s') { dino.isDucking = false; }
             });
             loop();
             </script>
         """
     }
 
-    # Normalize name keys to bypass string layout space mismatch options
     cleaned_mode = app_mode.replace("🕹️Tetris", "🕹️Tetris").strip()
-    
     st.title(app_mode)
     components.html(games[cleaned_mode], height=520)
