@@ -39,17 +39,17 @@ if app_mode == "🔢 Calculator":
             if (val1 == 9 and val2 == 10) or (val1 == 10 and val2 == 9):
                 st.success("🗣️ 21 YOU STUPID")
             elif val1 == 67 and val2 == 67:
-                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly.")
+                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly. The missle knows where it is by knowing where it isn't.")
             else:
                 st.success(f"Result: {val1 + val2}")
         elif operation == "Subtraction (-)":
             if val1 == 67 and val2 == 67:
-                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly.")
+                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly. The missle knows where it is by knowing where it isn't.")
             else:
                 st.success(f"Result: {val1 - val2}")
         elif operation == "Multiplication (×)":
             if val1 == 67 and val2 == 67:
-                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly.")
+                st.error("Fuck you now theres a Tactical Nuke arriving to your location rapidly. The missle knows where it is by knowing where it isn't.")
             else:
                 st.success(f"Result: {val1 * val2}")
         elif operation == "Division (÷)":
